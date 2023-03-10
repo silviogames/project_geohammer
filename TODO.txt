@@ -1,0 +1,72 @@
+SYSTEMS:
+- create very simple menu system that supports controller input
+- add player class
+- enable arbitrary numbers of players to be in the game (4 is the wanted max amount)
+- add simple animation system
+- redirect controller input to the open menu
+    - character selection menu
+    - in game menu
+    - main menu etc.
+- Y Sort all entities!
+
+MOVEMENT_SYSTEM:
+- first immediate later lerped
+- take lerp value into consideration when doing collision detection (miner can be partially on multiple tiles and is factored into damage calculation)
+- allow left stick for movement
+- allow hold for movement
+
+MINER:
+- animate miner
+
+OBJECTS:
+- add other crystals with cool temporal effects:
+    - strength
+    - speed
+    - luck for finding other crystals
+
+UI/UX
+- add super simple enum based menu system.
+- add flag to skip main menu directly into testing arena
+- unify analog and digital movement
+- control menus with controller (only the oldest controller?)
+- improve crystal count UI
+- add a menu for miner selection
+
+GRID/ARENA:
+- prevent player input during TF animation
+- add a hand crafted testing arena
+- add several types of arenas
+- make sure all of them have generic spawn locations
+- make hammer hits hit other miners
+- appearing blocks (orogeny, kenkmann) must interact with objects:
+    -what happens if player stands inside of the created mountain chain?
+    a player may take damage and then be inside the mountain, removing the block they got damaged by, this is a cool gameplay mechanic to temporarily capture another player.
+    - how are crystals effected, they could either be moved to the next free location or even cooler they could merge with the formed blocks, affecting them. then the crystal is metamorphically transformed and the containing block has much more life so it takes some time to break it and players may fight for the block.
+
+GAMEPLAY:
+- MAYBE a very simple exp system to lvl up attacks
+-
+
+VFX:
+- add some shader to crystals
+
+SPECIAL_ATTACKS:
+- implement consumption of specific minerals per special type
+
+MINER HERGARTEN:
+    - mass movement?
+    - earthquake
+    - something with matlap
+
+IMPLEMENTATION OF KENKMANN'S TRANSFORM FAULT:
+- instant version works now, needs testing though
+
+- transform particle does the effect after some delay
+- look at code from orogeny skill to find location and orientation of the fault line, (xy, o)
+- xy is the offset, o is the axis
+- visually display the fault line during the delay, maybe particles of debris
+- after delay the particle calls the arena method that does all the offsets and damage dealing
+
+
+
+
