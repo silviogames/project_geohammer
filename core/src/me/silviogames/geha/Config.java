@@ -5,9 +5,9 @@ import com.badlogic.gdx.files.FileHandle;
 
 public class Config
 {
-	public static void load_config()
+	public static void load_config(boolean verbose)
 	{
-		System.out.println("LOADING CONFIG");
+		if(verbose) System.out.println("LOADING CONFIG");
 		// loads and applies config
 
 		// number of successful assignments
@@ -21,7 +21,7 @@ public class Config
 			String[] split_line = line.split(":");
 			if (split_line.length != 2)
 			{
-				System.out.println("config line #" + line + "# invalid, skipped");
+				if (verbose) System.out.println("config line #" + line + "# invalid, skipped");
 				continue;
 			}
 			int val = -1;
@@ -30,7 +30,7 @@ public class Config
 				val = Integer.parseInt(split_line[1]);
 			} catch (Exception e)
 			{
-				System.out.println("config line #" + line + "# has no number after colon, skipped");
+				if (verbose) System.out.println("config line #" + line + "# has no number after colon, skipped");
 				continue;
 			}
 			for (CONF conf : CONF.values())
@@ -43,10 +43,12 @@ public class Config
 				}
 			}
 		}
-		System.out.println("CONFIG LOADING SUMMARY:");
-		System.out.println("number of config values: " + CONF.values().length);
-		System.out.println("number of loaded config lines: " + lines.length);
-		System.out.println("number of assignments: " + assigned_values);
+		if(verbose) {
+			System.out.println("CONFIG LOADING SUMMARY:");
+			System.out.println("number of config values: " + CONF.values().length);
+			System.out.println("number of loaded config lines: " + lines.length);
+			System.out.println("number of assignments: " + assigned_values);
+		}
 	}
 
 	public static void print_config()
@@ -60,7 +62,14 @@ public class Config
 
 	public enum CONF
 	{
+		MINER_SIMPLE_ATTACK_DAMAGE,
 		MINER_MAX_LIFE,
+
+		MINER_BLINK_MAX_TIME,
+
+		MINER_BLOOD_PARTICLE_OFFSET_X,
+		MINER_BLOOD_PARTICLE_OFFSET_Y,
+		MINER_BLOOD_TIME_MS,
 
 		STAMINA_COST_BASIC_ATTACK,
 		STAMINA_COST_SPECIAL_ATTACK,
@@ -76,6 +85,7 @@ public class Config
 		IMPACTOR_INITIAL_OFFSET,
 		IMPACTOR_SMOKE_RADIAL_OFFSET,
 		IMPACTOR_BLOCK_DAMAGE_RADIUS,
+		IMPACTOR_PLAYER_DAMAGE,
 
 		OROGENY_DAMAGE,
 		OROGENY_WIDTH,
@@ -87,13 +97,31 @@ public class Config
 		TRANSFORM_FAULT_OFFSET,
 		TRANSFORM_FAULT_DELAY_MS,
 
+		BRAIDED_CAST_OFFSET,
+		BRAIDED_PARTICLE_LIFETIME_MS,
+		BRAIDED_PARTICLE_CHILD_DELAY_MS,
+		BRAIDED_RANDOM_BRAIDING_BOOL,
+		BRAIDED_RANDOM_BRAIDING_CHANCE_PERCENT,
+
+		ALLUVIAL_FAN_STEP_DAMAGE,
+		ALLUVIAL_FAN_CHILD_DELAY_MS,
+		ALLUVIAL_FAN_TILE_RADIUS,
+
 		UI_CHAR_SELECT_LEFT_OFFSET,
 		UI_CHAR_SELECT_MID_OFFSET,
 		UI_CHAR_SELECT_BOX_WIDTH,
 		UI_CHAR_SELECT_BOX_HEIGHT,
 		UI_CHAR_SELECT_LOWER_OFFSET,
 		UI_CHAR_SELECT_TEXT_1_OFFSET,
+		UI_CHAR_SELECT_TEXT_2_OFFSET,
+		UI_CHAR_SELECT_TEXT_3_OFFSET,
 
+		UI_GAME_TIME_X,
+		UI_GAME_TIME_Y,
+		UI_GAME_TIME_BOX_WIDTH,
+		UI_GAME_TIME_BOX_HEIGHT,
+		UI_GAME_TIME_TEXT_OFFSET_X,
+		UI_GAME_TIME_TEXT_OFFSET_Y,
 		;
 
 		// IF THE FILE DOES NOT SET THE VALUE A DEFAULT OF 10 MAY BE WEIRD FOR SOME OF THE CONFIGS

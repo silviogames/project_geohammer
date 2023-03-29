@@ -6,78 +6,92 @@ filter: Nearest, Nearest
 repeat: none
 5x6font
   rotate: false
-  xy: 2, 334
+  xy: 2, 278
   size: 128, 64
   orig: 128, 64
   offset: 0, 0
   index: -1
 crystal
   rotate: false
-  xy: 88, 316
+  xy: 184, 326
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 directions
   rotate: false
-  xy: 132, 382
+  xy: 2, 260
   size: 67, 16
   orig: 67, 16
   offset: 0, 0
   index: -1
 error_frame
   rotate: false
-  xy: 2, 258
+  xy: 132, 302
   size: 16, 22
   orig: 16, 22
   offset: 0, 0
   index: -1
 guy
   rotate: false
-  xy: 2, 400
+  xy: 2, 366
   size: 296, 34
   orig: 296, 34
   offset: 0, 0
   index: -1
 impactor
   rotate: false
-  xy: 2, 282
+  xy: 2, 226
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
+particle_blood
+  rotate: false
+  xy: 2, 344
+  size: 203, 20
+  orig: 203, 20
+  offset: 0, 0
+  index: -1
 particles_rock
   rotate: false
-  xy: 2, 316
+  xy: 207, 348
   size: 84, 16
   orig: 84, 16
   offset: 0, 0
   index: -1
 pixel
   rotate: false
-  xy: 300, 401
+  xy: 300, 367
   size: 1, 1
   orig: 1, 1
   offset: 0, 0
   index: -1
 sheet_blocks
   rotate: false
-  xy: 132, 350
+  xy: 386, 370
   size: 16, 30
   orig: 16, 30
   offset: 0, 0
   index: -1
 sheet_break
   rotate: false
-  xy: 300, 404
+  xy: 300, 370
   size: 84, 30
   orig: 84, 30
   offset: 0, 0
   index: -1
 sheet_floor_tiles
   rotate: false
-  xy: 386, 418
+  xy: 132, 326
   size: 50, 16
   orig: 50, 16
+  offset: 0, 0
+  index: -1
+tile_gravel
+  rotate: false
+  xy: 71, 260
+  size: 16, 16
+  orig: 16, 16
   offset: 0, 0
   index: -1

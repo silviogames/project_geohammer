@@ -12,138 +12,145 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class Main extends ApplicationAdapter
 {
-	public static SpriteBatch batch;
-	public static SpriteBatch shader_batch;
-	OrthographicCamera camera;
-	Viewport viewport;
-	public static Smartrix smx_text_data = new Smartrix(100, -1, -1);
-	public static boolean debug_render = false;
-	public static boolean debug_input = true;
-	public static boolean skip_main_menu = false;
-	// TODO: 07.03.23 this is hardcoded right now, I'm not sure if I will have different arena sizes
-	public static int window_width = 16 * 24;
-	public static int window_height = 16 * 24;
-	Game game = new Game();
+   public static SpriteBatch batch;
+   public static SpriteBatch shader_batch;
+   OrthographicCamera camera;
+   Viewport viewport;
+   public static Smartrix smx_text_data = new Smartrix(100, -1, -1);
+   public static boolean debug_render = true;
+   public static boolean debug_input = true;
 
-	public static int upper_y_bound()
-	{
-		return Arena.arena_size * 16;
-	}
+   public static boolean spawn_keyboard_miner = false;
 
-	private static boolean key_press(int keycode)
-	{
-		return Gdx.input.isKeyJustPressed(keycode);
-	}
+   public static boolean god_mode = true;
+   public static boolean skip_main_menu = true;
+   // TODO: 07.03.23 this is hardcoded right now, I'm not sure if I will have different arena sizes
+   public static int window_width = 16 * 24;
+   public static int window_height = 16 * 24;
+   Game game = new Game();
 
-	@Override
-	public void create()
-	{
-		camera = new OrthographicCamera();
-		viewport = new FitViewport(16 * 24, 16 * 24, camera);
+   public static int upper_y_bound()
+   {
+      return Arena.arena_size * 16;
+   }
 
-		batch = new SpriteBatch();
-		shader_batch = new SpriteBatch();
+   private static boolean key_press(int keycode)
+   {
+      return Gdx.input.isKeyJustPressed(keycode);
+   }
 
-		Controllers.addListener(game);
+   @Override
+   public void create()
+   {
+      camera = new OrthographicCamera();
+      viewport = new FitViewport(16 * 24, 16 * 24, camera);
 
-		// TODO: 18.07.2021 use Viewport for zoom in
-		Res.load();
+      batch = new SpriteBatch();
+      shader_batch = new SpriteBatch();
 
-		Text.init();
+      Controllers.addListener(game);
 
-		game.init();
+      // TODO: 18.07.2021 use Viewport for zoom in
+      Res.load();
 
-		Config.load_config();
+      Text.init();
 
-		// TEST CODE ARENA
+      Controller_Buttons.init_default_mapping();
 
+      game.init();
 
-		// TEST CODE ARENA
-	}
+      Config.load_config(false);
 
-	@Override
-	public void resize(int width, int height)
-	{
-		viewport.update(width, height, true);
-	}
+      // TEST CODE ARENA
 
-	@Override
-	public void render()
-	{
-		ScreenUtils.clear(0.1f, 0.1f, 0.2f, 1);
+      System.out.println("0.01 as int " + Util.FLOAT_TO_INT(0.01f));
 
-		//try
-		//{
-		float d = Gdx.graphics.getDeltaTime();
+      // TEST CODE ARENA
+   }
 
-		update(Math.min(d, 0.1f));
-		//} catch (Exception e)
-		//{
-		//	System.out.println("CRASH DURING UPDATE");
-		//	System.out.println(e.getMessage());
-		//	// TODO: 19.07.2021 print error
-		//}
+   @Override
+   public void resize(int width, int height)
+   {
+      viewport.update(width, height, true);
+   }
 
-		camera.update();
-		batch.setProjectionMatrix(camera.combined);
+   @Override
+   public void render()
+   {
+      ScreenUtils.clear(0.1f, 0.1f, 0.2f, 1);
 
-		batch.begin();
+      //try
+      //{
+      float d = Gdx.graphics.getDeltaTime();
 
-		game.render();
-		// TODO: 26.07.2021 UI rendering ?
+      update(Math.min(d, 0.1f));
+      //} catch (Exception e)
+      //{
+      //	System.out.println("CRASH DURING UPDATE");
+      //	System.out.println(e.getMessage());
+      //	// TODO: 19.07.2021 print error
+      //}
 
-		// TODO: 01.02.23 text render
+      camera.update();
+      batch.setProjectionMatrix(camera.combined);
 
-		// for now no sorting of the text entries happens, since it is not needed in this project
-		for (int i = 0; i < smx_text_data.num_lines(); i++)
-		{
-			Text.render_from_text_smx(smx_text_data, i);
+      batch.begin();
 
-			// free entries after rendering
-			smx_text_data.set(i, Text.TEXT_DATA.STATUS.offset, -1);
-		}
+      game.render();
+      // TODO: 26.07.2021 UI rendering ?
 
-		batch.end();
+      // TODO: 01.02.23 text render
 
-		//shader_batch.setProjectionMatrix(camera.combined);
-		//shader_batch.setShader(game.shaders.shader_test);
-		//shader_batch.begin();
-		//shader_batch.draw(Res.IMPACTOR.region, 10, 10, 100, 100);
-		//shader_batch.end();
+      // for now no sorting of the text entries happens, since it is not needed in this project
+      for (int i = 0; i < smx_text_data.num_lines(); i++)
+      {
+         Text.render_from_text_smx(smx_text_data, i);
 
-		//} catch (Exception e)
-		//{
-		//	System.out.println("CRASH DURING RENDER");
-		//	System.out.print(e.getMessage());
-		//}
-	}
+         // free entries after rendering
+         smx_text_data.clear_line(i);
+      }
 
-	@Override
-	public void dispose()
-	{
-		batch.dispose();
-		Res.dispose();
+      batch.end();
 
-		// it seems that Text class right now does not need a dispose but fine, maybe in future
-		Text.dispose();
+      //shader_batch.setProjectionMatrix(camera.combined);
+      //shader_batch.setShader(game.shaders.shader_test);
+      //shader_batch.begin();
+      //shader_batch.draw(Res.IMPACTOR.region, 10, 10, 100, 100);
+      //shader_batch.end();
 
-		game.dispose();
-	}
+      //} catch (Exception e)
+      //{
+      //	System.out.println("CRASH DURING RENDER");
+      //	System.out.print(e.getMessage());
+      //}
+   }
 
-	void update(float delta)
-	{
-		if (key_press(Input.Keys.F4))
-		{
-			// RELOAD CONFIG
-			Config.load_config();
-		}
+   @Override
+   public void dispose()
+   {
+      batch.dispose();
+      Res.dispose();
 
-		if (key_press(Input.Keys.F5))
-		{
-			Config.print_config();
-		}
+      // it seems that Text class right now does not need a dispose but fine, maybe in future
+      Text.dispose();
 
-		game.input();
-		game.update(delta);
-	}
+      game.dispose();
+   }
+
+   void update(float delta)
+   {
+      if (key_press(Input.Keys.F4))
+      {
+         // RELOAD CONFIG
+         Config.load_config(true);
+      }
+
+      if (key_press(Input.Keys.F5))
+      {
+         Config.print_config();
+      }
+
+      game.input();
+      game.update(delta);
+   }
 }

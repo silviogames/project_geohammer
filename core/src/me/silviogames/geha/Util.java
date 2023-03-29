@@ -12,11 +12,22 @@ public class Util
 	public static byte[] eightdirx = new byte[]{-1, 0, 1, -1, 1, -1, 0, 1};
 	public static byte[] eightdiry = new byte[]{1, 1, 1, 0, 0, -1, -1, -1};
 
+	public static int[] spawn_pos_x = new int[]{0,1,0,1};
+	public static int[] spawn_pos_y = new int[]{0,1,1,0};
+
 	public static int euclid_norm(int x1, int y1, int x2, int y2)
 	{
 		int dx = (x1 - x2) * (x1 - x2);
 		int dy = (y1 - y2) * (y1 - y2);
 		return MathUtils.round((float) Math.sqrt((double) dx + dy));
+	}
+
+	public static int[] get_spawn(int miner_id){
+		// miner_id is expected to be between in interval [0...3]
+		int[] ret = new int[2];
+		ret[0] = spawn_pos_x[miner_id] == 0 ? 1 : Arena.arena_size - 2;
+		ret[1] = spawn_pos_y[miner_id] == 0 ? 1 : Arena.arena_size - 2;
+		return ret;
 	}
 
 	public static int[] RANDOM_RADIAL_OFFSET(int radius)
@@ -42,5 +53,14 @@ public class Util
 		// assuming 3 digits for float are wanted
 		// this should be used for times that are saved as ints in arrays of ints
 		return ((float) value_in) / 1000f;
+	}
+
+	public static int wrapped_increment(int value, int change, int min, int max)
+	{
+		// max is included!
+		int next_value = value + change;
+		if(next_value > max) next_value = min;
+		if(next_value < min ) next_value = max;
+		return next_value;
 	}
 }

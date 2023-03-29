@@ -121,9 +121,25 @@ public class Smartrix
 		list_empty.add(line);
 	}
 
+	public void remove_line(int line)
+	{
+		// this actually removes values from the backing array, which should not be used in heavy use,
+		// long smartrix, since it array copies under the hood
+		// in this project it is used for controllers
+		data.removeRange(line * width, line * width + width - 1);
+	}
+
 	public void clear()
 	{
 		data.clear();
+	}
+
+	public void clear_all_lines(){
+		// clearing all lines with line reuse
+		for (int i = 0; i <num_lines() ; i++)
+		{
+			clear_line(i);
+		}
 	}
 
 	public int num_lines()
@@ -248,4 +264,14 @@ public class Smartrix
 			System.out.println("[SMARTRIX] cannot read, file " + file_location_and_name + " does not exist!");
 		}
 	}
+
+    public boolean check_line(int line)
+	{
+		// return true if this line exists
+		if(line < num_lines())
+		{
+			return get(line, 0) != clear_value;
+		}
+		return false;
+    }
 }

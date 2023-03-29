@@ -618,22 +618,7 @@ public class Text
 	{
 		if (content.equals("")) return;
 
-		// look for next free entry:
-		int found_index = -1;
-		for (int i = 0; i < Main.smx_text_data.num_lines(); i++)
-		{
-			if (Main.smx_text_data.get(i, TEXT_DATA.STATUS.offset) == -1)
-			{
-				found_index = i;
-				break;
-			}
-		}
-		if (found_index == -1)
-		{
-			// no empty entry found, need new one.
-			found_index = Main.smx_text_data.num_lines();
-			Main.smx_text_data.add_line();
-		}
+		int found_index = Main.smx_text_data.find_free_line_index();
 
 		// fill/replace data for text parameters
 		Main.smx_text_data.set(found_index, TEXT_DATA.STATUS.offset, 1);

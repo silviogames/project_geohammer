@@ -1,6 +1,6 @@
 name=geohammer
 filename=
-output=../../core/assets
+output=../../assets
 
 alias=true
 alphaThreshold=0
@@ -30,14 +30,18 @@ square=true
 bleed=true
 limitMemory=true
 useIndexes=true
+prettyPrint=false
+legacyOutput=true
 
 scaleFactors=[{suffix:"",factor:1,resampling:bicubic}]
 inputFiles=[{path:.,type:Input,dirFilePrefix:null,recursive:false,flattenPaths:false}]
+keepInputFileExtensions=false
 
 
 -PROJ-
 
-version=4.10.0
+version=4.11.0
 fileTypeType=png
 fileTypeData={encoding:RGBA8888}
 previewBackgroundColor=ffffffff
+projectSettings={inputFiles:{}}
