@@ -13,8 +13,8 @@ public class DesktopLauncher
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration( );
 		config.setForegroundFPS(60);
 		config.setWindowPosition(600,20);
-		config.setResizable(true);
-		config.setWindowedMode(600,600);
+		config.setResizable(false);
+		config.setWindowedMode((int) (Main.window_width * 1.5f) ,(int) (Main.window_height * 1.5f));
 		config.setTitle("project geohammer");
 		new Lwjgl3Application( new Main( ), config );
 	}

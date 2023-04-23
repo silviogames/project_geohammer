@@ -1,29 +1,11 @@
 SYSTEMS:
-- add simple animation system
-- redirect controller input to the open menu
-    - character selection menu
-    - in game menu
-    - main menu etc.
 - Y Sort all entities!
 
 MOVEMENT_SYSTEM:
-- first immediate later lerped
 - take lerp value into consideration when doing collision detection (miner can be partially on multiple tiles and is factored into damage calculation)
 - allow left stick for movement
 - allow hold for movement
-
-MINER_ANIMATIONS:
-- first and most simple idea for the system:
--   states of the miner like (idle, move, attack) that are updated and the input system reacts
--   to the current state so pressing move during a move animation will do nothing,
--   holding move will trigger next move after current move ends
--   some of the moves need state, for example the move and attack animations have a duration
--   I could leave a few slots in MinerData for animation state data
--
-- example pressing move button during idle:
-- set animation to move, set direction in state
-- the render method of the miner reads the state and calculates the offset lerp to the next tile
--
+- unify analog and digital movement
 
 - example:
 - specials will later maybe be triggered by holding the special button for some short time,
@@ -31,9 +13,7 @@ MINER_ANIMATIONS:
 - effect will play. I need then to tune the timings so other players cannot to easily predict specials
 - atleast they cannot predict which special, but the cast animation should just be very short
 
-
 MINER:
-- animate miner
 
 OBJECTS:
 - add other crystals with cool temporal effects:
@@ -42,7 +22,6 @@ OBJECTS:
     - luck for finding other crystals
 
 UI/UX
-- unify analog and digital movement
 - control menus with controller (only the oldest controller?)
 - improve crystal count UI
 
@@ -51,7 +30,6 @@ GRID/ARENA:
 - add a hand crafted testing arena
 - add several types of arenas
 - make sure all of them have generic spawn locations
-- make hammer hits hit other miners
 - appearing blocks (orogeny, kenkmann) must interact with objects:
     -what happens if player stands inside of the created mountain chain?
     a player may take damage and then be inside the mountain, removing the block they got damaged by, this is a cool gameplay mechanic to temporarily capture another player.
@@ -65,7 +43,7 @@ VFX:
 - add some shader to crystals
 
 SPECIAL_ATTACKS:
-- implement consumption of specific minerals per special type
+- implement consumption of specific minerals per special type (if multiple minerals are wanted)
 
 MINER HERGARTEN:
     - mass movement?
@@ -86,15 +64,16 @@ MINER PREUSSER:
     DEFENSE - gravel floor (taking damage and slower on gravel)
     SPECIAL - something with glaciers (slippery floor?)
     COMBO   - first gravel floor then braided river, gravel moves and does more damage
+    COMBO   - combine gravel and ice so players will move over all gravel tiles and get all the damage
 
-PLAYTEST 2311:
-- game works for now but somehow is not very fun, atleast with two players
-- lack of holding and analog sticks makes gamepad input annoying
-- kenkmann skills bring quite a lot of new blocks to the arena
-- average rounds took 4 minutes but we did not focus on attacking us melee with the basic swing
-- not sure how to proceed now, either add more variety to blocks and improve the arena generation,
-    or add a new character for play variety but that probably does not solve the issue that the game
-    is not very fun right now.
--
+MINER HERGARTEN:
+    ATTACK  -
+    DEFENSE -
+    SPECIAL
+
+IDEAS FOR HERGARTEN SKILLS:
+    - something with matlab/code
+    - earthquake/tsunami
+    - landslide
 
 

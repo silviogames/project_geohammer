@@ -16,6 +16,9 @@ public enum MinerAttack
 
 	BRAIDED_RIVER(0, 3),
 	ALLUVIAL_FAN(0, 3),
+
+	GLACIER(0,3),
+
 	;
 
 	public final int stamina_cost;

@@ -16,6 +16,7 @@ public enum Particles
    ANGLE,
    VARIANT,
 
+   DATA1,
    ;
 
    // TYPES:
@@ -24,7 +25,6 @@ public enum Particles
    public static final int TYPE_IMPACTOR = 2;
    // VARIANT 1 = coming from left
    // VARIANT 2 = coming from right
-   // TODO: 15.02.23 but maybe this can be handled without variants just the initial conditions
 
    public static final int TYPE_IMPACTOR_SMOKE = 3;
    public static final int TYPE_IMPACTOR_SPARK = 4;
@@ -40,7 +40,14 @@ public enum Particles
 
    public static final int TYPE_GRAVEL = 40;
 
-   public static final int TYPE_BLOOD = 50;
+   public static final int TYPE_ICEBLOCK = 50;
+   // target_x and target_y are float encoded offsets to animate the movement of the iceblock
+   // angle is view_dir
+   // life is damage counter
+
+   public static final int TYPE_BLOOD = 100;
+
+   public static final int TYPE_TEST = 2000;
 
    public static final IntIntMap map_position_as_tiles = new IntIntMap();
    // TYPE_IDS of particles point to
@@ -63,6 +70,8 @@ public enum Particles
       map_position_as_tiles.put(TYPE_OROGEN, 1);
       map_position_as_tiles.put(TYPE_IMPACTOR, 1);
       map_position_as_tiles.put(TYPE_BRAIDED_RIVER, 1);
+      map_position_as_tiles.put(TYPE_ICEBLOCK, 1);
+      map_position_as_tiles.put(TYPE_TEST, 1);
 
       // it looks like it is not but it internally does a pixel displacement during render
       map_position_as_tiles.put(TYPE_ROCK_DEBRIS, 1);
@@ -71,6 +80,8 @@ public enum Particles
       //  sub tiles then it might be pixel
 
       map_faults.put(TYPE_OROGEN, 1);
+      map_faults.put(TYPE_ICEBLOCK, 1);
+
       map_position_as_tiles.put(TYPE_BRAIDED_RIVER, 1);
 
       // NOT SURE IF BLOOD IS SUPPOSED TO BE MOVED BUT THIS IS ONLY VISUAL SO ANYWAYS
@@ -89,6 +100,13 @@ public enum Particles
 
          switch (data_particle[TYPE.ordinal()])
          {
+            case TYPE_TEST:
+            {
+               int px = 16 * data_particle[POSX.ordinal()];
+               int py = 16 * data_particle[POSY.ordinal()];
+               RenderUtil.render_box(px, py, 16, 16, Color.PINK);
+            }
+            break;
             case 1: // ROCK DEBRIS
             {
                int angle = data_particle[ANGLE.ordinal()];
@@ -98,6 +116,7 @@ public enum Particles
                float ry = 16 * data_particle[POSY.ordinal()] + (data_particle[LIFE.ordinal()] / 5f) * dy;
                Main.batch.setColor(1f, 1f, 1f, (255 - data_particle[LIFE.ordinal()]) / 255f);
                Main.batch.draw(Res.PARTICLES_ROCK.sheet[data_particle[VARIANT.ordinal()]], rx, ry);
+               Main.batch.setColor(Color.WHITE);
             }
             break;
             case 2: // IMPACTOR
@@ -108,6 +127,14 @@ public enum Particles
                float rx = MathUtils.lerp(data_particle[POSX.ordinal()], data_particle[TARGETX.ordinal()], interp);
                float ry = MathUtils.lerp(data_particle[POSY.ordinal()], data_particle[TARGETY.ordinal()], interp);
                Main.batch.draw(Res.IMPACTOR.region, 16 * rx, 16 * ry);
+
+               if (Config.CONF.IMPACTOR_DISPLAY_TEXT.value == 1)
+               {
+                  int text_x = data_particle[TARGETX.ordinal()] * 16 + 8;
+                  int text_y = data_particle[TARGETY.ordinal()] * 16 + 8;
+
+                  Text.cdraw("TODESZONE!", text_x, text_y, Color.SCARLET, 1.4f);
+               }
             }
             break;
             case TYPE_IMPACTOR_SMOKE:
@@ -158,12 +185,25 @@ public enum Particles
             break;
             case TYPE_GRAVEL:
             {
-               // TODO: 29.03.23 MOVE THE RENDERING OF GRAVEL TO ARENA!
+               // MOVE THE RENDERING OF GRAVEL TO ARENA!
                //  since gravel can be hammered I need to remove the entries but I do not want to
                //  search all particles for the right gravel entry so the gravel particle is only logical, the visual effect happens in the arena render method!
+
+
+               //int px = data_particle[POSX.ordinal()] * 16;
+               //int py = data_particle[POSY.ordinal()] * 16;
+               //Main.batch.draw(Res.TILE_GRAVEL.region, px, py);
+            }
+            break;
+            case TYPE_ICEBLOCK:
+            {
                int px = data_particle[POSX.ordinal()] * 16;
                int py = data_particle[POSY.ordinal()] * 16;
-               Main.batch.draw(Res.TILE_GRAVEL.region, px, py);
+               float offset = Util.INT_TO_FLOAT(data_particle[TARGETX.ordinal()]);
+               int viewdir = data_particle[ANGLE.ordinal()];
+               Main.batch.setColor(Color.WHITE);
+               Main.batch.draw(Res.pixel, px + Util.fourdirx[viewdir] * offset, py + Util.fourdiry[viewdir] * offset, 16, 24);
+               Main.batch.setColor(Color.WHITE);
             }
             break;
          }
@@ -189,19 +229,29 @@ public enum Particles
 
          switch (data_particle[TYPE.ordinal()])
          {
+            case TYPE_TEST:
+               data_particle[LIFE.ordinal()]++;
+               if (data_particle[LIFE.ordinal()] > 60)
+               {
+                  dead = true;
+               }
+               break;
             case 1: // ROCK DEBRIS
+            {
                // TODO: 14.02.23 change life to float saved as int  (ms as ints)
                data_particle[LIFE.ordinal()] += 3;
                if (data_particle[LIFE.ordinal()] > 255)
                {
                   dead = true;
                }
-               break;
+            }
+            break;
 
             case 2: // IMPACTOR
             {
                float time = Util.INT_TO_FLOAT(data_particle[LIFE.ordinal()]);
-               time = MathUtils.clamp(time + delta / 1.7f, 0, 1);
+               float life_time = Util.INT_TO_FLOAT(Config.CONF.IMPACTOR_LIFETIME.value);
+               time = MathUtils.clamp(time + delta / life_time, 0, 1);
                if (time >= 1)
                {
                   dead = true;
@@ -404,7 +454,7 @@ public enum Particles
                         if (created_child)
                         {
                            // hit rock at location
-                           arena.hammer(nx, ny, 2);
+                           arena.hammer(nx, ny, 2, false);
                         }
                      }
                   }
@@ -415,12 +465,23 @@ public enum Particles
             break;
             case TYPE_GRAVEL:
             {
-               // right now gravel does not have a lifetime, maybe it will get one or the player must smash the gravels
-               // TODO: 29.03.23 gravel should also do damage once when spawning!
-
                float time = Util.INT_TO_FLOAT(data_particle[LIFE.ordinal()]);
                time += delta;
                data_particle[LIFE.ordinal()] = Util.FLOAT_TO_INT(time);
+
+               if (time >= Util.INT_TO_FLOAT(Config.CONF.ALLUVIAL_FAN_CHILD_DELAY_MS.value * 2))
+               {
+                  // the particle can be killed, the gravel is saved in the effect map.
+                  // it does damage and is rendered from there
+                  dead = true;
+               }
+
+               if (data_particle[DATA1.ordinal()] == 0)
+               {
+                  arena.hit_all_miners(data_particle[POSX.ordinal()], data_particle[POSY.ordinal()], Config.CONF.ALLUVIAL_FAN_CAST_DAMAGE.value);
+                  data_particle[DATA1.ordinal()] = 1;
+               }
+
                if (data_particle[VARIANT.ordinal()] == 0 && time >= Util.INT_TO_FLOAT(Config.CONF.ALLUVIAL_FAN_CHILD_DELAY_MS.value))
                {
                   // spawn children
@@ -476,7 +537,7 @@ public enum Particles
                      if (arena.gravel.get(alluvial_spawn_candidates_x[j], alluvial_spawn_candidates_y[j]) == 0)
                      {
                         int dst_to_mid = Util.euclid_norm(alluvial_spawn_candidates_x[j], alluvial_spawn_candidates_y[j], origin_x, origin_y);
-                        if (dst_to_mid > Config.CONF.ALLUVIAL_FAN_TILE_RADIUS.value || !arena.CHECK_bounds(alluvial_spawn_candidates_x[j], alluvial_spawn_candidates_y[j]) || !arena.CHECK_free_tile(alluvial_spawn_candidates_x[j],alluvial_spawn_candidates_y[j]))
+                        if (dst_to_mid > Config.CONF.ALLUVIAL_FAN_TILE_RADIUS.value || !arena.CHECK_bounds(alluvial_spawn_candidates_x[j], alluvial_spawn_candidates_y[j]) || !arena.CHECK_free_tile(alluvial_spawn_candidates_x[j], alluvial_spawn_candidates_y[j]))
                            continue;
                         int particle_id = arena.spawn_particle(alluvial_spawn_candidates_x[j], alluvial_spawn_candidates_y[j], TYPE_GRAVEL);
                         // child must have same flow dir!
@@ -488,6 +549,54 @@ public enum Particles
                   }
                   data_particle[VARIANT.ordinal()] = 1;
                }
+            }
+            break;
+            case TYPE_ICEBLOCK:
+            {
+               // increment the pixel offset
+               // until a new tile is reached,
+               // check the new block and destroy it if needed,
+               // hit miners
+               // spawn icy floor
+
+               // TODO: 21.04.23 maybe the timing of destroying blocks must be tweaked so
+               //  the ice block does not first overlap with the rock and then destroy it after
+               //  fully reaching the block, so maybe during the transition before reaching it
+
+               float offset = Util.INT_TO_FLOAT(data_particle[TARGETX.ordinal()]);
+               float speed = Util.INT_TO_FLOAT(Config.CONF.GLACIER_SPEED.value);
+
+               offset += delta * 16 * (1 / speed);
+               if (data_particle[DATA1.ordinal()] < 1 && offset > Arena.tile_size_px / 4f)
+               {
+                  int viewdir = data_particle[ANGLE.ordinal()];
+                  int nx = data_particle[POSX.ordinal()] + Util.fourdirx[viewdir];
+                  int ny = data_particle[POSY.ordinal()] + Util.fourdiry[viewdir];
+                  arena.hit_all_miners(nx, ny, Config.CONF.GLACIER_MINER_DAMAGE.value);
+                  arena.hammer(nx, ny, Config.CONF.GLACIER_BLOCK_DAMAGE.value, false);
+                  arena.ice.set(data_particle[POSX.ordinal()], data_particle[POSY.ordinal()], (byte) 1);
+                  data_particle[DATA1.ordinal()] = 1;
+               }
+               if (offset >= Arena.tile_size_px)
+               {
+                  offset = 0;
+                  // reset the ability to hit miners and blocks
+                  data_particle[DATA1.ordinal()] = 0;
+
+                  // change the tile position
+                  int viewdir = data_particle[ANGLE.ordinal()];
+                  data_particle[POSX.ordinal()] += Util.fourdirx[viewdir];
+                  data_particle[POSY.ordinal()] += Util.fourdiry[viewdir];
+
+                  data_particle[LIFE.ordinal()]++;
+                  if (data_particle[LIFE.ordinal()] >= 10)
+                  {
+                     dead = true;
+                     // TODO: 21.04.23 spawn ice particles when despawning
+                  }
+               }
+
+               data_particle[TARGETX.ordinal()] = Util.FLOAT_TO_INT(offset);
             }
             break;
          }

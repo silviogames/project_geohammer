@@ -14,6 +14,8 @@ public class RenderUtil
 
    public final static Color[] miner_colors_trans = new Color[4];
 
+   public final static Color ICE_COLOR;
+
    static
    {
       color_trans_gray.a = 0.5f;
@@ -31,6 +33,9 @@ public class RenderUtil
       miner_colors_trans[2].a = 0.5f;
       miner_colors_trans[3] = Color.GOLD.cpy();
       miner_colors_trans[3].a = 0.5f;
+
+      ICE_COLOR = Color.SKY.cpy();
+      ICE_COLOR.a = 0.7f;
    }
 
    public static void render_box(int posx, int posy, int width, int height)
@@ -52,6 +57,11 @@ public class RenderUtil
       render_box(posx, posy, MathUtils.clamp(MathUtils.round(width * fill), 0, width), height, cfull);
    }
 
+   public static float arc(float frac)
+   {
+      return MathUtils.sin(MathUtils.map(0, 1, 0, MathUtils.PI, frac));
+   }
+
    public static String time_to_display(float game_time)
    {
       int seconds = MathUtils.round(game_time % 60f);
@@ -63,7 +73,7 @@ public class RenderUtil
    public static int anim_time_to_frame(float time, float time_max, int num_frames)
    {
       // little helper function to transform from a float that represents time of the animation to frame
-     float frame_float = MathUtils.map(0f, time_max, 0, num_frames, time);
-     return MathUtils.clamp(MathUtils.floor(frame_float), 0, num_frames-1);
+      float frame_float = MathUtils.map(0f, time_max, 0, num_frames, time);
+      return MathUtils.clamp(MathUtils.floor(frame_float), 0, num_frames - 1);
    }
 }

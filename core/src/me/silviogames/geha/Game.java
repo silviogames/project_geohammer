@@ -119,12 +119,12 @@ public class Game implements ControllerListener
    @Override
    public void connected(Controller controller)
    {
-      System.out.println("before connecting the controller has player index "+controller.getPlayerIndex() + " and power level " +controller.getPowerLevel() + " support for player index "+controller.supportsPlayerIndex());
+      System.out.println("before connecting the controller has player index " + controller.getPlayerIndex() + " and power level " + controller.getPowerLevel() + " support for player index " + controller.supportsPlayerIndex());
       controller.setPlayerIndex(3);
       controller_unique_ids.add(controller.getUniqueId());
       controller_unique_id_short.add(controller.getUniqueId().substring(0, 8));
 
-      sm_controllers.add_line( 0, -1, 0, 0);
+      sm_controllers.add_line(0, -1, 0, 0);
 
       //controller_name.put(controller.getUniqueId(), local_controller_index);
       System.out.println("Controller [" + controller_unique_ids.size + "] " + controller.getName() + " [" + controller.getUniqueId() + "] has been connected!");
@@ -211,13 +211,18 @@ public class Game implements ControllerListener
       if (key_press(Input.Keys.F3))
       {
          // adding new miner that can be controlled with the keyboard for testing
-         arena.create_miner(Miner.MinerClass.PREUSSER);
+         arena.create_miner(Miner.MinerClass.KENKMANN);
       }
 
 
       if (key_press(Input.Keys.F6))
       {
          Main.debug_render = !Main.debug_render;
+      }
+
+      if (key_press(Input.Keys.F8))
+      {
+         arena.prepare();
       }
 
       if (key_press(Input.Keys.F9))

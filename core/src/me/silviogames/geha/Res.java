@@ -20,7 +20,7 @@ public enum Res
    CRYSTAL(1, 16, 16),
    IMPACTOR(1, 32, 32),
 
-   TILE_GRAVEL(1, 16,16),
+   TILE_GRAVEL(1, 16, 16),
 
    PIXEL(),
    ;
@@ -66,6 +66,18 @@ public enum Res
       load_queue.add(Anim.PARTICLE_BLOOD);
       load_anims(atlas.findRegion("particle_blood"), 50, 20, 0);
       load_queue.clear();
+
+      load_queue.add(Anim.MINER_IDLE);
+      load_queue.add(Anim.MINER_RUN);
+      load_queue.add(Anim.MINER_HAMMER);
+      load_anims(atlas.findRegion("guy"), 32, 34, 0);
+      load_queue.clear();
+
+      load_queue.add(Anim.MINER_IDLE);
+      load_queue.add(Anim.MINER_SLIDE);
+      load_anims(atlas.findRegion("guy"), 32, 34, 0);
+      load_queue.clear();
+
    }
 
    private static void fixBleeding(TextureRegion... array)

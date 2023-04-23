@@ -1,6 +1,7 @@
 package me.silviogames.geha;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.math.MathUtils;
 
 public enum MinerData
 {
@@ -35,6 +36,70 @@ public enum MinerData
    {
       color_box_back.a = 0.6f;
       color_white_transparent.a = 0.3f;
+   }
+
+   public static void render_miner(Smartrix sm_miners, int miner_id)
+   {
+      int minerposx = sm_miners.get(miner_id, MinerData.TILEX.ordinal());
+      int minerposy = sm_miners.get(miner_id, MinerData.TILEY.ordinal());
+      int miner_viewdir = sm_miners.get(miner_id, MinerData.VIEWDIR.ordinal());
+
+      if (sm_miners.get(miner_id, MinerData.ACTIVE.ordinal()) == 1)
+      {
+         float time_blink = Util.INT_TO_FLOAT(sm_miners.get(miner_id, MinerData.BLINK.ordinal()));
+         boolean blink = time_blink > 0f && MathUtils.floor(time_blink / 0.07f) % 2 == 0;
+
+         Main.batch.setColor(blink ? RenderUtil.miner_colors_trans[miner_id] : RenderUtil.miner_colors[miner_id]);
+
+         MinerAnim ma = MinerAnim.safe_ord(sm_miners.get(miner_id, MinerData.ANIM.ordinal()));
+         float anim_time = Util.INT_TO_FLOAT(sm_miners.get(miner_id, MinerData.ANIM_TIME.ordinal()));
+
+         float move_offset_x = 0f;
+         float move_offset_y = 0f;
+         float frac_time = ma.anim.get_fractional_time(anim_time);
+         float jump_arc_y = 0;
+
+         if (ma.offsetting_miner)
+         {
+            jump_arc_y = RenderUtil.arc(frac_time);
+            switch (miner_viewdir)
+            {
+               case 0:
+                  move_offset_y = frac_time * 16;
+                  break;
+               case 1:
+                  move_offset_x = frac_time * 16;
+                  break;
+               case 2:
+                  move_offset_y = frac_time * -16;
+                  break;
+               case 3:
+                  move_offset_x = frac_time * -16;
+                  break;
+            }
+         }
+
+         Main.batch.draw(Res.get_frame(anim_time, ma.anim, miner_viewdir == 3), 16 * minerposx - 16 + 8 + move_offset_x, 16 * minerposy + 8 + move_offset_y + jump_arc_y * Config.CONF.MINER_JUMP_HEIGHT.value);
+
+         // direction arrow (are only needed on alive miners)
+         int ud, lr;
+         lr = Util.fourdirx[miner_viewdir];
+         ud = Util.fourdiry[miner_viewdir];
+
+         if (Config.CONF.RENDER_DIRECTION_ARROWS.value == 1 && sm_miners.get(miner_id, MinerData.ACTIVE.ordinal()) == 1)
+         {
+            Main.batch.setColor(RenderUtil.miner_colors_trans[miner_id]);
+            Main.batch.draw(Res.DIRECTIONS.sheet[miner_viewdir], 16 * minerposx + (lr * (24 + Arena.osc_arrow.value())) + move_offset_x, 16 * minerposy + (ud * (24 + Arena.osc_arrow.value())) + 8 + move_offset_y);
+         }
+      } else
+      {
+         // DEAD
+         Main.batch.setColor(RenderUtil.miner_colors[miner_id]);
+         Main.batch.draw(Res.GUY.sheet[0], 16 * minerposx - 16 + 8, 16 * minerposy + 8, Res.GUY.sheet_width / 2f, Res.GUY.sheet_height / 2f, Res.GUY.sheet_width, Res.GUY.sheet_height, 0.75f, 0.75f, 90);
+      }
+
+
+      Main.batch.setColor(Color.WHITE);
    }
 
    public static void render_miner_HUD(Smartrix smx_miner, int miner_id)

@@ -17,16 +17,22 @@ public class Main extends ApplicationAdapter
    OrthographicCamera camera;
    Viewport viewport;
    public static Smartrix smx_text_data = new Smartrix(100, -1, -1);
-   public static boolean debug_render = true;
+   public static boolean debug_render = false;
    public static boolean debug_input = true;
 
    public static boolean spawn_keyboard_miner = false;
 
    public static boolean god_mode = true;
+
+   public static boolean auto_reload_config = true;
+
    public static boolean skip_main_menu = true;
+
    // TODO: 07.03.23 this is hardcoded right now, I'm not sure if I will have different arena sizes
-   public static int window_width = 16 * 24;
-   public static int window_height = 16 * 24;
+   public static int window_width = 16 * Arena.arena_size;
+   public static int window_height = 16 * Arena.arena_size;
+
+   Timer timer_config_reload = new Timer(0.5f);
    Game game = new Game();
 
    public static int upper_y_bound()
@@ -43,7 +49,7 @@ public class Main extends ApplicationAdapter
    public void create()
    {
       camera = new OrthographicCamera();
-      viewport = new FitViewport(16 * 24, 16 * 24, camera);
+      viewport = new FitViewport(window_width, window_height, camera);
 
       batch = new SpriteBatch();
       shader_batch = new SpriteBatch();
@@ -61,9 +67,12 @@ public class Main extends ApplicationAdapter
 
       Config.load_config(false);
 
+      // I call prepare after loading the config since values from config are now used for
+      // map generation and that used to be a bug where the map gen code used the default config values, which created bad maps
+      Game.arena.prepare();
+
       // TEST CODE ARENA
 
-      System.out.println("0.01 as int " + Util.FLOAT_TO_INT(0.01f));
 
       // TEST CODE ARENA
    }
@@ -148,6 +157,17 @@ public class Main extends ApplicationAdapter
       if (key_press(Input.Keys.F5))
       {
          Config.print_config();
+      }
+
+      if (key_press(Input.Keys.F7))
+      {
+         auto_reload_config = !auto_reload_config;
+         System.out.println("CONFIG AUTO LOAD :" + (auto_reload_config ? "active" : "inactive"));
+      }
+
+      if (auto_reload_config && timer_config_reload.update(delta))
+      {
+         Config.load_config(false);
       }
 
       game.input();

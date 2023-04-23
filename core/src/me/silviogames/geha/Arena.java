@@ -6,13 +6,19 @@ import com.badlogic.gdx.utils.IntIntMap;
 
 public class Arena
 {
-   public static int arena_size = 24;
+   public static int arena_size = 36;
+
+   public static int tile_size_px = 16;
+
+   int seed = 0;
 
    Game game;
    Timer timer_stamina_gain = new Timer(0.3f);
    Timer timer_sort_random_strings = new Timer(1f);
    Timer timer_pick_crystals = new Timer(0.1f);
    Osc osc_crystals = new Osc(3f, 15f, 10f);
+
+   // USING ROCKTYPES
    Flatbyte board;
    Flatbyte damage;
    Flatbyte floor;
@@ -22,33 +28,36 @@ public class Arena
 
    Flatbyte gravel;
 
-   OpenSimplexNoise noise_board = new OpenSimplexNoise(10, 2);
+   Flatbyte ice;
 
+   OpenSimplexNoise noise_board = new OpenSimplexNoise(200, 2);
+   OpenSimplexNoise noise_rocktype = new OpenSimplexNoise(300, 4);
 
    // MINERS
-   Osc osc_arrow = new Osc(4, 25f, 20f);
+   public static Osc osc_arrow = new Osc(4, 25f, 20f);
    Smartrix sm_particles = new Smartrix(Particles.values().length, -1, -1);
 
    // CRYSTALS
    Smartrix sm_miners = new Smartrix(MinerData.values().length, -1, -1);
    Smartrix sm_crystals = new Smartrix(3, -1, -1);
 
+   static int num_total_rocks = 0;
+
    public void init(Game game)
    {
       this.game = game;
       // clean new board
-      board = new Flatbyte(arena_size, arena_size, (byte) -1, (byte) 0);
+      board = new Flatbyte(arena_size, arena_size, (byte) -1, (byte) -1);
       damage = new Flatbyte(arena_size, arena_size, (byte) -1, (byte) 0);
       braided_flow = new Flatbyte(arena_size, arena_size, (byte) -1, (byte) 0);
       gravel = new Flatbyte(arena_size, arena_size, (byte) -1, (byte) 0);
+      ice = new Flatbyte(arena_size, arena_size, (byte) -1, (byte) 0);
 
       // placing rocks pseudo-randomly on board
       // probability of placement decreases with distance to center of grid
 
       // different floor tile variations (indices into sheet array)
       floor = new Flatbyte(arena_size, arena_size, (byte) -1, (byte) 0);
-
-      prepare();
    }
 
    public void update(float delta)
@@ -58,6 +67,7 @@ public class Arena
 
       float time_max = Util.INT_TO_FLOAT(Config.CONF.MINER_BLINK_MAX_TIME.value);
       // BLINK TIME UPDATING
+
       for (int i = 0; i < sm_miners.num_lines(); i++)
       {
          float time_blink = Util.INT_TO_FLOAT(sm_miners.get(i, MinerData.BLINK.ordinal()));
@@ -70,8 +80,23 @@ public class Arena
             }
          }
          sm_miners.set(i, MinerData.BLINK.ordinal(), Util.FLOAT_TO_INT(time_blink));
-      }
 
+         // ANIMATION UPDATE
+         MinerAnim ma = MinerAnim.safe_ord(sm_miners.get(i, MinerData.ANIM.ordinal()));
+         float anim_time = Util.INT_TO_FLOAT(sm_miners.get(i, MinerData.ANIM_TIME.ordinal()));
+         float[] ret = ma.anim.update(anim_time, delta);
+         sm_miners.set(i, MinerData.ANIM_TIME.ordinal(), Util.FLOAT_TO_INT(ret[0]));
+         if (ret[1] == 1)
+         {
+            ma.key_frame(this, sm_miners, i);
+         }
+         if (ret[2] == 1)
+         {
+            MinerAnim follow_anim = ma.anim_over(this, sm_miners, i);
+            // ANIMATION IS OVER, resetting to idle
+            sm_miners.set(i, MinerData.ANIM.ordinal(), follow_anim.ordinal());
+         }
+      }
 
       if (Config.CONF.STAMINA_SYSTEM.value == 1 && timer_stamina_gain.update(delta))
       {
@@ -140,24 +165,46 @@ public class Arena
       {
          for (int iy = 0; iy < board.height; iy++)
          {
-            Main.batch.draw(Res.SHEET_FLOOR_TILES.sheet[0], 16 * ix, 16 * iy);
          }
       }
 
+
       // TODO: 19.07.2021 some time in future I need to Y sort entities and Walls
-      // RENDER BLOCKS
+
+      // RENDER TILES
+
       for (int ix = 0; ix < board.width; ix++)
       {
          for (int iy = board.height - 1; iy >= 0; iy--)
          {
-            byte block = board.get(ix, iy);
-            if (block == (byte) 1)
+            // FLOOR TEXTURE
+            Main.batch.draw(Res.SHEET_FLOOR_TILES.sheet[0], 16 * ix, 16 * iy);
+
+            // EFFECT LAYERS:
+
+            // ICE:
+            if (ice.get(ix, iy) == 1)
             {
+               RenderUtil.render_box(16 * ix, 16 * iy, 16, 16, RenderUtil.ICE_COLOR);
+            }
+
+            // GRAVEL:
+            if (gravel.get(ix, iy) == 1)
+            {
+               Main.batch.draw(Res.TILE_GRAVEL.region, 16 * ix, 16 * iy);
+            }
+
+            byte block = board.get(ix, iy);
+            RockTypes rt = RockTypes.safe_ord(block);
+            if (rt != null)
+            {
+               Main.batch.setColor(rt.color);
                Main.batch.draw(Res.SHEET_BLOCKS.sheet[0], 16 * ix, 16 * iy);
+               Main.batch.setColor(Color.WHITE);
                byte ord_dam = damage.get(ix, iy);
                if (ord_dam > 0)
                {
-                  int mapped_break = MathUtils.round(MathUtils.map(0, Config.CONF.BLOCK_LIFE.value, 0, 4, ord_dam));
+                  int mapped_break = MathUtils.round(MathUtils.map(0, Config.CONF.BLOCK_LIFE.value * rt.life_multiplier, 0, 4, ord_dam));
                   //int show_break_frame = MathUtils.clamp(mapped_break, 0, 4);
                   Main.batch.draw(Res.SHEET_BREAK.sheet[mapped_break], 16 * ix, 16 * iy);
                }
@@ -170,36 +217,7 @@ public class Arena
    {
       for (int i = 0; i < sm_miners.num_lines(); i++)
       {
-         int minerposx = sm_miners.get(i, MinerData.TILEX.ordinal());
-         int minerposy = sm_miners.get(i, MinerData.TILEY.ordinal());
-         int miner_viewdir = sm_miners.get(i, MinerData.VIEWDIR.ordinal());
-
-         if (sm_miners.get(i, MinerData.ACTIVE.ordinal()) == 1)
-         {
-            float time_blink = Util.INT_TO_FLOAT(sm_miners.get(i, MinerData.BLINK.ordinal()));
-            boolean blink = time_blink > 0f && MathUtils.floor(time_blink / 0.07f) % 2 == 0;
-
-            Main.batch.setColor(blink ? RenderUtil.miner_colors_trans[i] : RenderUtil.miner_colors[i]);
-            Main.batch.draw(Res.GUY.sheet[0], 16 * minerposx - 16 + 8, 16 * minerposy + 8);
-         } else
-         {
-            // DEAD
-            Main.batch.setColor(RenderUtil.miner_colors[i]);
-            Main.batch.draw(Res.GUY.sheet[0], 16 * minerposx - 16 + 8, 16 * minerposy + 8, Res.GUY.sheet_width / 2f, Res.GUY.sheet_height / 2f, Res.GUY.sheet_width, Res.GUY.sheet_height, 0.75f, 0.75f, 90);
-         }
-
-         // direction arrow
-         int ud, lr;
-         lr = Util.fourdirx[miner_viewdir];
-         ud = Util.fourdiry[miner_viewdir];
-
-         if (Config.CONF.RENDER_DIRECTION_ARROWS.value == 1 && sm_miners.get(i, MinerData.ACTIVE.ordinal()) == 1)
-         {
-            Main.batch.setColor(RenderUtil.miner_colors_trans[i]);
-            Main.batch.draw(Res.DIRECTIONS.sheet[miner_viewdir], 16 * minerposx + (lr * (24 + osc_arrow.value())), 16 * minerposy + (ud * (24 + osc_arrow.value())) + 8);
-         }
-
-         Main.batch.setColor(Color.WHITE);
+         MinerData.render_miner(sm_miners, i);
       }
    }
 
@@ -266,7 +284,7 @@ public class Arena
             int locy = ty + offy;
             if (Math.sqrt(offx * offx + offy * offy) <= Config.CONF.IMPACTOR_BLOCK_DAMAGE_RADIUS.value)
             {
-               hammer(locx, locy, 10);
+               hammer(locx, locy, 10, true);
                hit_all_miners(locx, locy, Config.CONF.IMPACTOR_PLAYER_DAMAGE.value);
                // this would theoretically also hit the owner of the impact if the miner managed to walk below the impact after triggering it
             }
@@ -341,7 +359,7 @@ public class Arena
 
       if (place_block)
       {
-         board.set(tx, ty, (byte) 1);
+         board.set(tx, ty, (byte) RockTypes.GABBRO.ordinal());
          damage.set(tx, ty, (byte) 0);
       }
    }
@@ -378,8 +396,8 @@ public class Arena
                // need to subtract here since I do not move but look up in other direction to move
                byte new_board_val = board.get_boundchecked(dim1, dim2 - tiley_offset);
                byte new_damage_val = damage.get_boundchecked(dim1, dim2 - tiley_offset);
-               temp_row_board[dim2] = new_board_val == -1 ? (byte) 0 : new_board_val;
-               temp_row_damage[dim2] = new_damage_val == -1 ? (byte) 0 : new_damage_val;
+               temp_row_board[dim2] = new_board_val == -1 ? (byte) -1 : new_board_val;
+               temp_row_damage[dim2] = new_damage_val == -1 ? (byte) -1 : new_damage_val;
             } else
             { // HORIZONTAL FAULT LINE, MOVING IN X DIRECTION
                // dim1 = y
@@ -390,8 +408,8 @@ public class Arena
                // need to subtract here since I do not move but look up in other direction to move
                byte new_board_val = board.get_boundchecked(dim2 - tilex_offset, dim1);
                byte new_damage_val = damage.get_boundchecked(dim2 - tilex_offset, dim1);
-               temp_row_board[dim2] = new_board_val == -1 ? (byte) 0 : new_board_val;
-               temp_row_damage[dim2] = new_damage_val == -1 ? (byte) 0 : new_damage_val;
+               temp_row_board[dim2] = new_board_val == -1 ? (byte) -1 : new_board_val;
+               temp_row_damage[dim2] = new_damage_val == -1 ? (byte) -1 : new_damage_val;
             }
          }
          for (int dim2 = 0; dim2 < board.width; dim2++)
@@ -463,35 +481,48 @@ public class Arena
       // TODO: 29.03.23 effect layers are not yet displaced!
    }
 
-   public void hammer(int tx, int ty, int dealt_damage)
+   public void hammer(int tx, int ty, int dealt_damage, boolean destroy_effect_maps)
    {
+      // the flag DESTROY_EFFECT_MAPS will distinguish between skills that do damage to the arena and simple hit
+      // since simple hits should remove gravel and ice while skills may not in most cases
+      // impact for example will destroy effect maps but glacier wont
+
       // TODO: 04.11.22 move this method somewhere else.
       //  this is called by the miner class static method when swining the hammer
 
       // TODO: 08.11.22 later hitting rocks is done differently, different moves/skills will inflict damage on rocks
 
       // this technically could hit the attacker but he is not on that tile!
+      // but now that the attack animation plays, the player cannot move and will not be on the tile the frame
 
       byte block_wall = board.get(tx, ty);
-      if (block_wall == 0)
+      RockTypes rt = RockTypes.safe_ord(block_wall);
+      if (rt == null)
       {
-         //System.out.println("no block at pos " + tx + " | " + ty);
+         System.out.println("no block at pos " + tx + " | " + ty);
       } else
       {
          byte current_damage = damage.get(tx, ty);
 
+         for (int i = 0; i < MathUtils.random(3, 6); i++)
+         {
+            // TODO: 06.04.23 replace this with better hit particles
+            spawn_particle(tx, ty, Particles.TYPE_ROCK_DEBRIS);
+         }
+
          current_damage += dealt_damage;
-         if (current_damage >= Config.CONF.BLOCK_LIFE.value)
+
+         if (current_damage >= Config.CONF.BLOCK_LIFE.value * rt.life_multiplier)
          {
             // break stone
-            board.set(tx, ty, (byte) 0);
+            board.set(tx, ty, (byte) -1);
             for (int i = 0; i < MathUtils.random(6, 12); i++)
             {
                spawn_particle(tx, ty, Particles.TYPE_ROCK_DEBRIS);
             }
             current_damage = 0;
 
-            if (MathUtils.random(100) < Config.CONF.CRYSTAL_CHANCE.value)
+            if (MathUtils.random(100) < rt.crystal_chance())
             {
                int index_crystal_free = sm_crystals.find_free_line_index();
                sm_crystals.set(index_crystal_free, Crystal.TYPE.ordinal(), 0);
@@ -502,24 +533,35 @@ public class Arena
          damage.set(tx, ty, current_damage);
       }
 
-      // HAMMERING GRAVEL TO DUST
-      if (gravel.get(tx, ty) == 1)
+      if(destroy_effect_maps)
       {
-         // TODO: 29.03.23 THIS ONLY WORKS LOGICALLY RIGHT NOW,
-         //  I need to render the gravel from the gravel effect layer, other wise I cannot
-         gravel.set(tx, ty, (byte) 0);
-         for (int i = 0; i < MathUtils.random(4, 8); i++)
+         // HAMMERING GRAVEL TO DUST
+         if (gravel.get(tx, ty) == 1)
          {
-            spawn_particle(tx, ty, Particles.TYPE_ROCK_DEBRIS);
+            gravel.set(tx, ty, (byte) 0);
+            for (int i = 0; i < MathUtils.random(4, 8); i++)
+            {
+               spawn_particle(tx, ty, Particles.TYPE_ROCK_DEBRIS);
+            }
+         }
+         if (ice.get(tx, ty) == 1)
+         {
+            ice.set(tx, ty, (byte) 0);
+            for (int i = 0; i < MathUtils.random(4, 8); i++)
+            {
+               // TODO: 23.04.23 ICE PARTICLES!
+               spawn_particle(tx, ty, Particles.TYPE_ROCK_DEBRIS);
+            }
          }
       }
    }
+
 
    boolean CHECK_free_tile(int tx, int ty)
    {
       byte tile_floor = floor.get(tx, ty);
       byte block_wall = board.get(tx, ty);
-      return block_wall <= 0;
+      return block_wall < 0;
    }
 
    public boolean CHECK_bounds(int tx, int ty)
@@ -612,29 +654,41 @@ public class Arena
 
    public void prepare()
    {
+      // TODO: 20.04.23 game will crash in second round
+      seed = MathUtils.random(0, Integer.MAX_VALUE - 100);
+      OpenSimplexNoise noise_board = new OpenSimplexNoise(seed, 2);
+      OpenSimplexNoise noise_rocktype = new OpenSimplexNoise(seed + 1, 4);
+
       // sets up the arena for playing a round
       // clear all miners (will be added from character selection menu)
       // remove all particles and objects
       // generate the map
       // reset map damage
+      num_total_rocks = 0;
 
       int mid = board.width / 2;
       for (int ix = 0; ix < board.width; ix++)
       {
          for (int iy = 0; iy < board.height; iy++)
          {
+            board.set(ix, iy, (byte) -1);
+
             int dst_to_mid = Util.euclid_norm(ix, iy, mid, mid);
 
             float val = (float) ((noise_board.noise(ix, iy) + 1) / 2f);
-            if (dst_to_mid < 10)
+            if (dst_to_mid < 20)
             {
-               if (val <= 0.4f)
+               if (val <= 0.5f)
                {
-                  board.set(ix, iy, (byte) 1);
+                  float spawn_noise = (float) (noise_rocktype.noise(ix, iy) + 1) / 2f;
+                  RockTypes rt = RockTypes.generate_from_noise(spawn_noise);
+                  board.set(ix, iy, (byte) rt.ordinal());
+                  num_total_rocks++;
                }
             }
          }
       }
+      System.out.println("[ARENA] should have spawned " + num_total_rocks + " rocks");
       // TODO: 29.03.23 I need to reset effect maps like braided river and gravel later when restarting a game!
 
       // TODO: 18.03.23 reusing lines are in wrong order due to pop
@@ -650,8 +704,11 @@ public class Arena
          running_debug_offset -= 10;
       }
 
-      RenderUtil.render_box(Config.CONF.UI_GAME_TIME_X.value, Config.CONF.UI_GAME_TIME_Y.value, Config.CONF.UI_GAME_TIME_BOX_WIDTH.value, Config.CONF.UI_GAME_TIME_BOX_HEIGHT.value, RenderUtil.color_trans_gray);
-      Text.cdraw(RenderUtil.time_to_display(Game.game_time), Config.CONF.UI_GAME_TIME_X.value + Config.CONF.UI_GAME_TIME_TEXT_OFFSET_X.value, Config.CONF.UI_GAME_TIME_Y.value + Config.CONF.UI_GAME_TIME_TEXT_OFFSET_Y.value, Color.WHITE, 2f);
+      int box_x = Main.window_width / 2 - Config.CONF.UI_GAME_TIME_BOX_WIDTH.value / 2;
+      int box_y = Main.window_height - Config.CONF.UI_GAME_TIME_BOX_HEIGHT.value;
+
+      RenderUtil.render_box(box_x, box_y, Config.CONF.UI_GAME_TIME_BOX_WIDTH.value, Config.CONF.UI_GAME_TIME_BOX_HEIGHT.value, RenderUtil.color_trans_gray);
+      Text.cdraw(RenderUtil.time_to_display(Game.game_time), box_x + Config.CONF.UI_GAME_TIME_TEXT_OFFSET_X.value, box_y + Config.CONF.UI_GAME_TIME_TEXT_OFFSET_Y.value, Color.WHITE, 2f);
 
       // HUD is abstracted and rendered offset for every miner
       for (int i = 0; i < sm_miners.num_lines(); i++)

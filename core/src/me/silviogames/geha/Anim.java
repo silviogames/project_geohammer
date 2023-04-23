@@ -7,6 +7,11 @@ public enum Anim
    DUMMY(2, 1f, -1, false, 0, 1),
    PARTICLE_BLOOD(4, 0.07f, -1, false, 0, 0, 1, 2, 3),
 
+   MINER_IDLE(2, 0.3f, -1, false, 0, 1),
+   MINER_RUN(3, 0.04f, -1, true, 0, 1, 2, 1),
+   MINER_HAMMER(4, 0.025f, 2, true, 0, 0, 1, 1, 1, 1, 1, 1, 2, 3, 3),
+   MINER_SLIDE(2, 0.04f, -1, true, 0, 1),
+
    ;
    public static float[] returner = new float[3];
    public final int keyframe, num_frames; // number of individual frames, may appear more than once in anim
@@ -22,6 +27,11 @@ public enum Anim
       this.total_time = frame_time * frames.length;
       this.frames = frames;
       this.keyframe = keyframe;
+   }
+
+   public float get_fractional_time(float current_time)
+   {
+      return current_time / total_time;
    }
 
    public float[] update(float current_time, float change)
