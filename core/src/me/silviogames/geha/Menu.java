@@ -46,6 +46,8 @@ public enum Menu
    static float selection_ready_delay = 0f;
    static float selection_ready_delay_time = 3f;
 
+   static boolean random_classes = false;
+
    //--------------------
 
    // STATIC STATE SECTION: INGAME:
@@ -59,6 +61,63 @@ public enum Menu
 
    static float test_anim_time = 0f;
 
+   public boolean input_update(int sm_controller_index, int controller_hash, Game game)
+   {
+      boolean ret = false;
+      // this is called for all controllers/miners per frame
+      // returning true if I want to break the controller loop:
+      // for example if I wait for a player to press to go from main menu to character selection,
+      // only one press should be processed and then break the loop
+
+      switch (this)
+      {
+         case MAIN_MENU:
+            if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.ACTIONS_B) == 2)
+            {
+               game.change_to_menu(CHARACTER_SELECTION);
+               ret = true;
+            }
+            break;
+         case CHARACTER_SELECTION:
+         {
+            if (Game.sm_controllers.get(sm_controller_index, Controller_Data.ID_SELECTION_CONFIRM.ordinal()) == 0)
+            {
+               int class_index_change = 0;
+               if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.DPAD_LEFT) == 2)
+               {
+                  class_index_change = 1;
+               }
+
+               if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.DPAD_RIGHT) == 2)
+               {
+                  class_index_change = -1;
+               }
+
+               if (class_index_change != 0)
+               {
+                  Game.sm_controllers.set(sm_controller_index, Controller_Data.ID_SELECTION_CLASS.ordinal(), Util.wrapped_increment(Game.sm_controllers.get(sm_controller_index, Controller_Data.ID_SELECTION_CLASS.ordinal()), class_index_change, 0, Miner.MinerClass.values().length - 1));
+               }
+            }
+
+            if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.ACTIONS_B) == 2)
+            {
+               Game.sm_controllers.set(sm_controller_index, Controller_Data.ID_SELECTION_CONFIRM.ordinal(), 0);
+            }
+            if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.ACTIONS_A) == 2)
+            {
+               Game.sm_controllers.set(sm_controller_index, Controller_Data.ID_SELECTION_CONFIRM.ordinal(), 1);
+            }
+         }
+         break;
+         case INGAME:
+         {
+            Miner.handle_input(Game.arena, sm_controller_index);
+         }
+         break;
+      }
+
+      return ret;
+   }
 
    public void update(float delta, Game game)
    {
@@ -81,12 +140,14 @@ public enum Menu
          case INGAME:
          {
             Game.game_time += delta;
+            Game.time_power_effect += delta * 10;
             Game.arena.update(delta);
 
             if (Main.debug_input)
             {
+               // KEYBOARD DEBUG INPUT THAT DOES STUFF TO THE ARENA
+               // BUT NOT DIRECTLY CONTROLS MINERS
                game.debug_input();
-               game.keyboard_input();
             }
 
             if (delayed_press(Input.Keys.ESCAPE, delta))
@@ -108,7 +169,7 @@ public enum Menu
                {
                   if (timer_game_over.update(delta))
                   {
-                     if (Game.arena.number_alive_miners() <= 1)
+                     if (Game.arena.number_alive_miners() <= 1 && !Main.debug_render)
                      {
                         game_over_delay = 0.001f;
                      }
@@ -132,6 +193,11 @@ public enum Menu
                game.change_to_menu(MAIN_MENU);
             }
 
+            if (key_press(Input.Keys.R))
+            {
+               random_classes = !random_classes;
+            }
+
             if (key_press(Input.Keys.F1))
             {
                Array<Controller> list_controller = Controllers.getControllers();
@@ -149,8 +215,16 @@ public enum Menu
                {
                   for (int i = 0; i < Game.sm_controllers.num_lines(); i++)
                   {
-                     Miner.MinerClass mc = Miner.MinerClass.safe_ord(Game.sm_controllers.get(i, Controller_Data.ID_SELECTION_CLASS.ordinal()));
+                     Miner.MinerClass mc = null;
+                     if (random_classes)
+                     {
+                        mc = Miner.MinerClass.random();
+                     } else
+                     {
+                        mc = Miner.MinerClass.safe_ord(Game.sm_controllers.get(i, Controller_Data.ID_SELECTION_CLASS.ordinal()));
+                     }
                      // mc should never be null here
+
                      int miner_id = Game.arena.create_miner(mc);
                      Game.sm_controllers.set(i, Controller_Data.ID_MINER.ordinal(), miner_id);
                   }
@@ -250,7 +324,7 @@ public enum Menu
 
                if (pressed_button != null)
                {
-                  Miner.handle_input(Game.arena, Game.arena.sm_miners, miner_index, pressed_button);
+                  //Miner.handle_input(Game.arena, Game.arena.sm_miners, miner_index, );
                } else
                {
                   System.out.println("invalid action!");
@@ -316,6 +390,7 @@ public enum Menu
 
          case CHARACTER_SELECTION:
 
+            random_classes = false;
             // when this menu is entered after a played game the miners must be cleared.
             Game.arena.prepare();
 
@@ -358,7 +433,7 @@ public enum Menu
             Text.cdraw("PROJECT GEOHAMMER", Main.window_width / 2, Main.window_height / 2 + 20, Color.WHITE, 3);
             Text.cdraw("press space to start", Main.window_width / 2, Main.window_height / 2 - 20, Color.WHITE, 2);
 
-            Text.draw("version " + 2313, Main.window_width - 60, 2, Color.WHITE, 1);
+            Text.draw("version " + 2319, Main.window_width - 60, 2, Color.WHITE, 1);
 
             if (esc_time > 0f)
             {
@@ -381,10 +456,12 @@ public enum Menu
          case INGAME:
          {
             Game.arena.render_floor();
-            Game.arena.render_miners();
-            Game.arena.render_particles();
-            Game.arena.render_HUD();
 
+            //Game.arena.render_miners();
+
+            Game.arena.render_particles();
+
+            Game.arena.render_HUD();
          }
          break;
          case CONTROLLER_MAPPING:
@@ -415,16 +492,23 @@ public enum Menu
          int text_pos_mid = left_offset + (box_width + mid_offset) * i + box_width / 2;
          Text.cdraw("MINER " + (i + 1), text_pos_mid, lower_offset + text_miner_offset, Color.WHITE, 2f);
 
-         if (Game.controller_unique_ids.size > i)
+         if (Game.sm_controllers.num_lines() > i)
          {
             RenderUtil.render_box(left_offset + (box_width + mid_offset) * i, lower_offset, box_width, box_height, RenderUtil.miner_colors_trans[i]);
 
-            Text.cdraw(Game.controller_unique_id_short.get(i), text_pos_mid, lower_offset + 2, Color.WHITE, 1f);
+            //Text.cdraw(Game.controller_unique_id_short.get(i), text_pos_mid, lower_offset + 2, Color.WHITE, 1f);
+            Text.cdraw(Game.sm_controllers.get(i, Controller_Data.HASH.ordinal()) + " ", text_pos_mid, lower_offset + 12, Color.WHITE, 1f);
 
             int class_index = Game.sm_controllers.get(i, Controller_Data.ID_SELECTION_CLASS.ordinal());
             Miner.MinerClass mc = Miner.MinerClass.safe_ord(class_index);
 
-            Text.cdraw("< " + mc + " >", text_pos_mid, lower_offset + text_class_offset, Color.WHITE, 1f);
+            if (random_classes)
+            {
+               Text.cdraw("< RANDOM >", text_pos_mid, lower_offset + text_class_offset, Color.GOLD, 1f);
+            } else
+            {
+               Text.cdraw("< " + mc + " >", text_pos_mid, lower_offset + text_class_offset, Color.WHITE, 1f);
+            }
 
             Text.cdraw("ABILITIES:", text_pos_mid, lower_offset + text_class_offset - 20, Color.LIGHT_GRAY, 1f);
 

@@ -15,6 +15,9 @@ public class RenderUtil
    public final static Color[] miner_colors_trans = new Color[4];
 
    public final static Color ICE_COLOR;
+   public final static Color IMPACT_WARNING_COLOR;
+
+   public final static Color color_interp = Color.WHITE.cpy();
 
    static
    {
@@ -36,6 +39,19 @@ public class RenderUtil
 
       ICE_COLOR = Color.SKY.cpy();
       ICE_COLOR.a = 0.7f;
+
+      IMPACT_WARNING_COLOR = Color.SCARLET.cpy();
+      IMPACT_WARNING_COLOR.a = 0.25f;
+   }
+
+   public static Color interp(Color from, Color to, float interp)
+   {
+      // if needed longer than for the call copy the color returned!
+      // otherwise this will overwrite later!
+      color_interp.r = MathUtils.lerp(from.r, to.r, interp);
+      color_interp.g = MathUtils.lerp(from.g, to.g, interp);
+      color_interp.b = MathUtils.lerp(from.b, to.b, interp);
+      return color_interp;
    }
 
    public static void render_box(int posx, int posy, int width, int height)

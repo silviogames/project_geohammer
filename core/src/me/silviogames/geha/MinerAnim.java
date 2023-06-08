@@ -6,6 +6,9 @@ public enum MinerAnim
    MOVE(Anim.MINER_RUN, true, true),
    SLIDE(Anim.MINER_SLIDE, true, true),
    SIMPLE_ATTACK(Anim.MINER_HAMMER, true, false),
+   CAST_ATTACK(Anim.MINER_CAST, true, false),
+   SPIN_ON_SPOT(Anim.MINER_SPIN, false, false),
+   SPIN_MOVING(Anim.MINER_SPIN, true, true),
    ;
 
    MinerAnim(Anim anim, boolean si, boolean offmin)
@@ -36,12 +39,14 @@ public enum MinerAnim
    {
       // return which anim follows after this anim, right now it is only used to trigger
       // the next
-      MinerAnim ret = IDLE;
+      float spin_time = Util.INT_TO_FLOAT(sm_miners.get(miner_id, MinerData.TIME_SPIN_EFFECT.ordinal()));
+      MinerAnim ret = spin_time > 0 ? SPIN_ON_SPOT : IDLE;
       // for example if walk animation is over the miner must be moved to the other tile
       switch (this)
       {
          case MOVE:
          case SLIDE:
+         case SPIN_MOVING:
          {
             // checking the next tile if it also is an ice tile or blocked
             int viewdir = sm_miners.get(miner_id, MinerData.VIEWDIR.ordinal());
@@ -50,19 +55,30 @@ public enum MinerAnim
 
             if ((!arena.CHECK_free_tile(next_tx, next_ty) || !arena.CHECK_bounds(next_tx, next_ty)) && this == SLIDE)
             {
-               arena.deal_damage_to_miner(miner_id, 30);
+               int slide_count = sm_miners.get(miner_id, MinerData.ANIM_STATE_1.ordinal());
+               if (slide_count >= 3)
+               {
+                  arena.deal_damage_to_miner(miner_id, 30 * (slide_count > 6 ? 2 : 1));
+               }
             }
 
             if (arena.CHECK_free_tile(next_tx, next_ty) && arena.CHECK_bounds(next_tx, next_ty) && arena.ice.get(next_tx, next_ty) == 1)
             {
+               sm_miners.incr(miner_id, MinerData.ANIM_STATE_1.ordinal(), 1);
                ret = SLIDE;
             }
 
             // this move is just finished the current move, it does not mean another slide.
-            Miner.move(arena, sm_miners, miner_id, viewdir);
+            Miner.move_miner(arena, sm_miners, miner_id, viewdir);
          }
          break;
       }
+      if (this == SLIDE && ret == IDLE)
+      {
+         // slide is over, reset the slider counter
+         sm_miners.set(miner_id, MinerData.ANIM_STATE_1.ordinal(), 0);
+      }
+
       return ret;
    }
 
@@ -71,16 +87,15 @@ public enum MinerAnim
       switch (this)
       {
          case SIMPLE_ATTACK:
+         {
             Miner.basic_attack(arena, sm_miners, miner_id);
-            break;
+         }
+         break;
+         case CAST_ATTACK:
+         {
+            Miner.perform_special_attack(arena, sm_miners, miner_id, sm_miners.get(miner_id, MinerData.CAST.ordinal()));
+         }
+         break;
       }
-   }
-
-   public static void handle_input()
-   {
-      // TODO: 06.04.23 should the inputs be passed here and handled depending on the current anim?
-      // but most inputs are possible in IDLE anim,
-      // maybe I will later allow something during another anim.
-
    }
 }

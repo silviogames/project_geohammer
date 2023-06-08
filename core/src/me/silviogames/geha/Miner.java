@@ -1,89 +1,176 @@
 package me.silviogames.geha;
 
+import com.badlogic.gdx.math.MathUtils;
+
 public class Miner
 {
-   public static void handle_input(Arena arena, Smartrix sm_miners, int miner_id, Controller_Buttons ia)
+   public static void handle_input(Arena arena, int sm_controller_index)
    {
-      if (!sm_miners.check_line(miner_id))
+      // this is called inside the loop of sm_controllers
+      int miner_id = Game.sm_controllers.get(sm_controller_index, Controller_Data.ID_MINER.ordinal());
+      int controller_hash = Game.sm_controllers.get(sm_controller_index, Controller_Data.HASH.ordinal());
+
+      inner_handle_input(arena, miner_id, controller_hash);
+   }
+
+   public static void inner_handle_input(Arena arena, int miner_id, int controller_hash)
+   {
+      // this method can be called directly passing miner id and the controller_hash,
+      // controller_hash can be the debug value which keeps the state populated by keyboard input
+
+      if (!arena.sm_miners.check_line(miner_id))
       {
          System.out.println("[Miner.handle_input: cannot control this miner with id] " + miner_id);
          return;
       }
 
-      if (sm_miners.get(miner_id, MinerData.ACTIVE.ordinal()) != 1)
+      if (arena.sm_miners.get(miner_id, MinerData.ACTIVE.ordinal()) != 1)
       {
-         System.out.println("cannot control dead miner " + miner_id);
+         //System.out.println("cannot control dead miner " + miner_id);
          return;
       }
 
-      MinerAnim ma = MinerAnim.safe_ord(sm_miners.get(miner_id, MinerData.ANIM.ordinal()));
+      MinerAnim ma = MinerAnim.safe_ord(arena.sm_miners.get(miner_id, MinerData.ANIM.ordinal()));
       if (ma.supress_input) return;
 
-      switch (ia)
+      float spin_time = Util.INT_TO_FLOAT(arena.sm_miners.get(miner_id, MinerData.TIME_SPIN_EFFECT.ordinal()));
+      if (spin_time > 0)
       {
-         case DPAD_UP:
-            // move(arena, smx_miner, line, 0);
-            sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 0);
-            if (CHECK_move(arena, sm_miners, miner_id))
+         // the miner is in spin mode right now!
+         // MOVE ONE TILE
+         if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.DPAD_LEFT) > 0 || Controller_Buttons.read_button(controller_hash, Controller_Buttons.LEFT_AXIS_X) < -300)
+         {
+            arena.sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 3);
+            if (CHECK_move(arena, arena.sm_miners, miner_id))
             {
-               sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
-               sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.MOVE.ordinal());
+               arena.sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
+               arena.sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.SPIN_MOVING.ordinal());
             }
-            break;
-         case DPAD_DOWN:
-            // move(arena, smx_miner, line, 2);
-            sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 2);
-            if (CHECK_move(arena, sm_miners, miner_id))
+         } else if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.DPAD_RIGHT) > 0 || Controller_Buttons.read_button(controller_hash, Controller_Buttons.LEFT_AXIS_X) > 300)
+         {
+            arena.sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 1);
+            if (CHECK_move(arena, arena.sm_miners, miner_id))
             {
-               sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
-               sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.MOVE.ordinal());
+               arena.sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
+               arena.sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.SPIN_MOVING.ordinal());
             }
-            break;
-         case DPAD_LEFT:
-            // move(arena, smx_miner, line, 3);
-            sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 3);
-            if (CHECK_move(arena, sm_miners, miner_id))
+         } else if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.DPAD_UP) > 0 || Controller_Buttons.read_button(controller_hash, Controller_Buttons.LEFT_AXIS_Y) > 300)
+         {
+            arena.sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 0);
+            if (CHECK_move(arena, arena.sm_miners, miner_id))
             {
-               sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
-               sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.MOVE.ordinal());
+               arena.sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
+               arena.sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.SPIN_MOVING.ordinal());
             }
-            break;
-         case DPAD_RIGHT:
-            // move(arena, smx_miner, line, 1);
-            sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 1);
-            if (CHECK_move(arena, sm_miners, miner_id))
+         } else if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.DPAD_DOWN) > 0 || Controller_Buttons.read_button(controller_hash, Controller_Buttons.LEFT_AXIS_Y) < -300)
+         {
+            arena.sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 2);
+            if (CHECK_move(arena, arena.sm_miners, miner_id))
             {
-               sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
-               sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.MOVE.ordinal());
+               arena.sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
+               arena.sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.SPIN_MOVING.ordinal());
             }
-            break;
-         case ACTIONS_B:
-            if (consume_stamina(sm_miners, miner_id, MinerAttack.SIMPLE_HIT))
-            {
-               // NOT CHECKING FOR A BLOCK AT TARGET
-               sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
-               sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.SIMPLE_ATTACK.ordinal());
-               //basic_attack(arena, sm_miners, miner_id);
-            }
-            break;
-         case ACTIONS_A:
-            // TODO: 06.04.23 change all the special attack calls so first a cast animation is played and then the keyframe triggers the actual attack
-            Miner.perform_special_attack(arena, arena.sm_miners, miner_id, 0);
-            break;
-         case ACTIONS_Y:
-            Miner.perform_special_attack(arena, arena.sm_miners, miner_id, 1);
-            break;
-         case ACTIONS_X:
-            Miner.perform_special_attack(arena, arena.sm_miners, miner_id, 2);
-            break;
+         }
+         // spin mode does not allow any other input than movement
+         return;
+      }
 
-         //case ACTIONS_A:
+      if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.BUTTON_R) == 1)
+      {
+         // CHANGE VIEWDIR
 
-         //if (consume_stamina(smx_miner, line, MinerAttack.ROUND_SWING))
-         //{
-         //	special_attack(arena, smx_miner, line);
-         //}
-         //break;
+      } else
+      {
+         // MOVE ONE TILE
+         if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.DPAD_LEFT) > 0 || Controller_Buttons.read_button(controller_hash, Controller_Buttons.LEFT_AXIS_X) < -300)
+         {
+            arena.sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 3);
+            if (CHECK_move(arena, arena.sm_miners, miner_id))
+            {
+               arena.sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
+               arena.sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.MOVE.ordinal());
+            }
+         } else if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.DPAD_RIGHT) > 0 || Controller_Buttons.read_button(controller_hash, Controller_Buttons.LEFT_AXIS_X) > 300)
+         {
+            arena.sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 1);
+            if (CHECK_move(arena, arena.sm_miners, miner_id))
+            {
+               arena.sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
+               arena.sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.MOVE.ordinal());
+            }
+         } else if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.DPAD_UP) > 0 || Controller_Buttons.read_button(controller_hash, Controller_Buttons.LEFT_AXIS_Y) > 300)
+         {
+            arena.sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 0);
+            if (CHECK_move(arena, arena.sm_miners, miner_id))
+            {
+               arena.sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
+               arena.sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.MOVE.ordinal());
+            }
+         } else if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.DPAD_DOWN) > 0 || Controller_Buttons.read_button(controller_hash, Controller_Buttons.LEFT_AXIS_Y) < -300)
+         {
+            arena.sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 2);
+            if (CHECK_move(arena, arena.sm_miners, miner_id))
+            {
+               arena.sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
+               arena.sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.MOVE.ordinal());
+            }
+         } else
+         {
+            if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.RIGHT_AXIS_X) < -500)
+            {
+               arena.sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 3);
+            } else if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.RIGHT_AXIS_X) > 500)
+            {
+               arena.sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 1);
+            } else if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.RIGHT_AXIS_Y) < -500)
+            {
+               arena.sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 2);
+            } else if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.RIGHT_AXIS_Y) > 500)
+            {
+               arena.sm_miners.set(miner_id, MinerData.VIEWDIR.ordinal(), 0);
+            }
+            // one controller had problems with the RIGHT AXIS?? which prevented the A and B buttons to be pressed! but this controller was connected to the laptop as Bbitdo, while all others where PS4 dualshocks!
+
+            if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.ACTIONS_B) > 0)
+            {
+               if (consume_stamina(arena.sm_miners, miner_id, MinerAttack.SIMPLE_HIT))
+               {
+                  // NOT CHECKING FOR A BLOCK AT TARGET
+                  arena.sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
+                  arena.sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.SIMPLE_ATTACK.ordinal());
+                  //basic_attack(arena, sm_miners, miner_id);
+               }
+            } else
+            {
+               if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.ACTIONS_A) == 2)
+               {
+                  if (CHECK_skill_crystals(arena, miner_id))
+                  {
+                     arena.sm_miners.set(miner_id, MinerData.CAST.ordinal(), 0);
+                     arena.sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
+                     arena.sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.CAST_ATTACK.ordinal());
+                  }
+               } else if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.ACTIONS_X) == 2)
+               {
+                  if (CHECK_skill_crystals(arena, miner_id))
+                  {
+                     arena.sm_miners.set(miner_id, MinerData.CAST.ordinal(), 1);
+                     arena.sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
+                     arena.sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.CAST_ATTACK.ordinal());
+                  }
+               } else if (Controller_Buttons.read_button(controller_hash, Controller_Buttons.ACTIONS_Y) == 2)
+               {
+                  if (CHECK_skill_crystals(arena, miner_id))
+                  {
+                     arena.sm_miners.set(miner_id, MinerData.CAST.ordinal(), 2);
+                     arena.sm_miners.set(miner_id, MinerData.ANIM_TIME.ordinal(), 0);
+                     arena.sm_miners.set(miner_id, MinerData.ANIM.ordinal(), MinerAnim.CAST_ATTACK.ordinal());
+                  }
+               }
+
+            }
+            // no movement
+         }
       }
    }
 
@@ -141,6 +228,12 @@ public class Miner
       // 1 -> defensive
       // 2 -> special special
 
+      if (special_variant < 0 || special_variant > 2)
+      {
+         System.out.println("cannot cast this special_variant: " + special_variant);
+         return;
+      }
+
       Miner.MinerClass mc = Miner.MinerClass.safe_ord(arena.sm_miners.get(miner_id, MinerData.CLASS.ordinal()));
       if (mc == null)
       {
@@ -167,26 +260,19 @@ public class Miner
             System.out.println("cannot perform special attack that is null!");
             return;
          }
+
          int miner_crystals = sm_miner.get(miner_id, MinerData.NUM_CRYSTALS.ordinal());
-         if (miner_crystals - Config.CONF.CRYSTAL_SKILL_COST.value < 0)
+         boolean power = arena.sm_miners.get(miner_id, MinerData.TIME_POWER_EFFECT.ordinal()) > 0;
+
+         if (!power && miner_crystals - Config.CONF.CRYSTAL_SKILL_COST.value < 0)
          {
             System.out.println("miner [" + miner_id + "] does not have enough crystals to perform " + ma);
             return;
-         } else
-         {
-            miner_crystals -= Config.CONF.CRYSTAL_SKILL_COST.value;
-            // OVERWRITE VALUE
-            sm_miner.set(miner_id, MinerData.NUM_CRYSTALS.ordinal(), miner_crystals);
-
-            System.out.println("miner [" + miner_id + "] now performs " + ma);
          }
-         // TODO: 24.02.23 right now miners can perform as many special attacks per time they want (as long as crystals are possessed)
-         // 	maybe in the future I want to introduce a cool down, at least for very special skills that involve a longer animation which I do not want to overlap
-         //  this will be solved by the cast animation
 
-         // TODO: 24.02.23 for now there is only one crystal, later 3 will be introduced, maybe!
-
-         // TODO: 24.02.23 for now the special attacks are a switch case here, maybe this will move to a separate function in the MinerAttack enum but it is fine I think!
+         // most skills will work regardless of the arena state
+         boolean consume_crystals = true;
+         // the skill will check if crystal consumption is needed and if so set consume_crystals to false
          switch (ma)
          {
             case GLACIER:
@@ -196,25 +282,32 @@ public class Miner
                int view_dir = arena.sm_miners.get(miner_id, MinerData.VIEWDIR.ordinal());
                Util.GEN_RECT_POSITIONS(miner_tx, miner_ty, Config.CONF.GLACIER_OFFSET.value, view_dir, Config.CONF.GLACIER_WIDTH.value, 1);
 
-               // TODO: 21.04.23 add a slight delay to spawning so the middle blocks spawn earlier, creating a curved front
                for (int i = 0; i < Util.RECT_xpos.size; i++)
                {
                   int pid = arena.spawn_particle(Util.RECT_xpos.get(i), Util.RECT_ypos.get(i), Particles.TYPE_ICEBLOCK);
                   arena.sm_particles.set(pid, Particles.ANGLE.ordinal(), view_dir);
+                  float val = 1 - MathUtils.sin(MathUtils.map(0, Util.RECT_xpos.size, 0, MathUtils.PI, i));
+                  arena.sm_particles.set(pid, Particles.TARGETX.ordinal(), Util.FLOAT_TO_INT(-16 * val));
                }
             }
             break;
-            case ALLUVIAL_FAN:
+            case EROSION:
             {
+               // TODO: 01.06.23 check if rocks can be eroded, if not do not consume crystals
                int miner_tx = arena.sm_miners.get(miner_id, MinerData.TILEX.ordinal());
                int miner_ty = arena.sm_miners.get(miner_id, MinerData.TILEY.ordinal());
                int view_dir = arena.sm_miners.get(miner_id, MinerData.VIEWDIR.ordinal());
-               int particle_id = arena.spawn_particle(miner_tx + Util.fourdirx[view_dir], miner_ty + Util.fourdiry[view_dir], Particles.TYPE_GRAVEL);
-               arena.sm_particles.set(particle_id, Particles.ANGLE.ordinal(), view_dir);
-               // putting the origin of the fan in target pos so the particles know when to stop,
-               // this info is passed onto children particles
-               arena.sm_particles.set(particle_id, Particles.TARGETX.ordinal(), miner_tx);
-               arena.sm_particles.set(particle_id, Particles.TARGETY.ordinal(), miner_ty);
+
+               Util.GEN_RECT_POSITIONS(miner_tx, miner_ty, Config.CONF.EROSION_CAST_OFFSET.value, view_dir, Config.CONF.EROSION_WIDTH.value, 1);
+
+               for (int i = 0; i < Util.RECT_xpos.size; i++)
+               {
+                  int pid = arena.spawn_particle(Util.RECT_xpos.get(i), Util.RECT_ypos.get(i), Particles.TYPE_EROSION);
+                  arena.sm_particles.set(pid, Particles.ANGLE.ordinal(), view_dir);
+                  //float val = 1 - MathUtils.sin(MathUtils.map(0, Util.RECT_xpos.size, 0, MathUtils.PI, i));
+                  //arena.sm_particles.set(pid, Particles.TARGETX.ordinal(), Util.FLOAT_TO_INT(-16 * val));
+               }
+
             }
             break;
             case BRAIDED_RIVER:
@@ -222,9 +315,18 @@ public class Miner
                int miner_tx = arena.sm_miners.get(miner_id, MinerData.TILEX.ordinal());
                int miner_ty = arena.sm_miners.get(miner_id, MinerData.TILEY.ordinal());
                int view_dir = arena.sm_miners.get(miner_id, MinerData.VIEWDIR.ordinal());
-               // TODO: 27.03.23 I'm not checking here if flow map is occupied, lets see what that means
-               int particle_id = arena.spawn_particle(miner_tx + Config.CONF.BRAIDED_CAST_OFFSET.value * Util.fourdirx[view_dir], miner_ty + Config.CONF.BRAIDED_CAST_OFFSET.value * Util.fourdiry[view_dir], Particles.TYPE_BRAIDED_RIVER);
-               arena.sm_particles.set(particle_id, Particles.ANGLE.ordinal(), view_dir);
+
+               int spawn_x = miner_tx + Config.CONF.BRAIDED_CAST_OFFSET.value * Util.fourdirx[view_dir];
+               int spawn_y = miner_ty + Config.CONF.BRAIDED_CAST_OFFSET.value * Util.fourdiry[view_dir];
+
+               if (!arena.CHECK_free_tile(spawn_x, spawn_y))
+               {
+                  consume_crystals = false;
+               } else
+               {
+                  int particle_id = arena.spawn_particle(spawn_x, spawn_y, Particles.TYPE_BRAIDED_RIVER);
+                  arena.sm_particles.set(particle_id, Particles.ANGLE.ordinal(), view_dir);
+               }
             }
             break;
             case IMPACT:
@@ -242,48 +344,14 @@ public class Miner
                int miner_ty = arena.sm_miners.get(miner_id, MinerData.TILEY.ordinal());
                int view_dir = arena.sm_miners.get(miner_id, MinerData.VIEWDIR.ordinal());
 
-               int side_offset = 1;
-               // 1 = above or right,
-               // -1 = left or below
-               boolean vert = false;
+               Util.GEN_RECT_POSITIONS(miner_tx, miner_ty, Config.CONF.OROGENY_OFFSET_FROM_CASTER.value, view_dir, Config.CONF.OROGENY_WIDTH.value, Config.CONF.OROGENY_HEIGHT.value);
 
-               switch (view_dir)
+               for (int i = 0; i < Util.RECT_xpos.size; i++)
                {
-                  case 0: // HORIZONTAL ABOVE
-                     side_offset = 1;
-                     break;
-                  case 2: // HORIZONTAL BELOW
-                     side_offset = -1;
-                     break;
-                  case 1: // VERTICAL RIGHT
-                     vert = true;
-                     side_offset = 1;
-                     break;
-                  case 3: // VERTICAL LEFT
-                     vert = true;
-                     side_offset = -1;
-                     break;
-               }
-               // use info from switch statement for placement
-               if (vert)
-               {
-                  for (int iy = 0; iy < Config.CONF.OROGENY_WIDTH.value; iy++)
-                  {
-                     for (int ix = 0; ix < Config.CONF.OROGENY_HEIGHT.value; ix++)
-                     {
-                        // the particles itself creates debris particles and then after its lifetime
-                        arena.spawn_particle(miner_tx + ix - (Config.CONF.OROGENY_HEIGHT.value / 2) + Config.CONF.OROGENY_OFFSET_FROM_CASTER.value * side_offset, miner_ty + iy - (Config.CONF.OROGENY_WIDTH.value / 2), Particles.TYPE_OROGEN);
-                     }
-                  }
-               } else
-               {
-                  for (int ix = 0; ix < Config.CONF.OROGENY_WIDTH.value; ix++)
-                  {
-                     for (int iy = 0; iy < Config.CONF.OROGENY_HEIGHT.value; iy++)
-                     {
-                        arena.spawn_particle(miner_tx + ix - (Config.CONF.OROGENY_WIDTH.value / 2), miner_ty + Config.CONF.OROGENY_OFFSET_FROM_CASTER.value * side_offset + iy - (Config.CONF.OROGENY_HEIGHT.value / 2), Particles.TYPE_OROGEN);
-                     }
-                  }
+                  int tx = Util.RECT_xpos.get(i);
+                  int ty = Util.RECT_ypos.get(i);
+                  int pid = arena.spawn_particle(tx, ty, Particles.TYPE_OROGEN);
+                  arena.create_orogeny_block(tx, ty, Util.RECT_growth.get(i));
                }
             }
             break;
@@ -299,18 +367,238 @@ public class Miner
                {
                   // HORIZONTAL
                   tf_variant = 1;
-                  // TODO: 07.03.23 since the fault is between tiles check the offsets, one must be bigger!
-                  xy_offset = miner_ty + (view_dir == 0 ? 3 : -3);
+                  xy_offset = miner_ty + (view_dir == 0 ? 1 : -1) * Config.CONF.TRANSFORM_FAULT_OFFSET.value;
                } else if (view_dir == 1 || view_dir == 3)
                {
                   tf_variant = 2;
-                  xy_offset = miner_tx + (view_dir == 1 ? 3 : -3);
+                  xy_offset = miner_tx + (view_dir == 1 ? 1 : -1) * Config.CONF.TRANSFORM_FAULT_OFFSET.value;
                }
+               consume_crystals = arena.init_transform_fault(xy_offset, tf_variant == 2);
+
                arena.spawn_particle(tf_variant, xy_offset, Particles.TYPE_TRANSFORM_FAULT);
             }
             break;
+
+            case MELT:
+            {
+               // TODO: 01.06.23 make animation of melt similar to erosion,
+               //  a check is needed if there will be rocks to melt and if crystals should be consumed
+
+               int miner_tx = arena.sm_miners.get(miner_id, MinerData.TILEX.ordinal());
+               int miner_ty = arena.sm_miners.get(miner_id, MinerData.TILEY.ordinal());
+               int view_dir = arena.sm_miners.get(miner_id, MinerData.VIEWDIR.ordinal());
+
+               Util.GEN_CIRCLE_POSITIONS(miner_tx + Util.fourdirx[view_dir] * Config.CONF.MELT_OFFSET.value, miner_ty + Util.fourdiry[view_dir] * Config.CONF.MELT_OFFSET.value, Config.CONF.MELT_RADIUS.value);
+
+               int num_melts = 0;
+
+               for (int i = 0; i < Util.CIRCLE_xpos.size; i++)
+               {
+                  int mx = Util.CIRCLE_xpos.get(i);
+                  int my = Util.CIRCLE_ypos.get(i);
+
+                  if (arena.rock_walls.get(mx, my) >= 0)
+                  {
+                     num_melts++;
+                     arena.melt.set(mx, my, (byte) (60 + (arena.rock_walls.get(mx, my) + 1) * 20));
+                     arena.rock_walls.set(mx, my, (byte) -1);
+                  }
+               }
+               if (num_melts == 0) consume_crystals = false;
+            }
+            break;
+
+            case TSCHERMAK:
+            {
+               int miner_tx = arena.sm_miners.get(miner_id, MinerData.TILEX.ordinal());
+               int miner_ty = arena.sm_miners.get(miner_id, MinerData.TILEY.ordinal());
+               int view_dir = arena.sm_miners.get(miner_id, MinerData.VIEWDIR.ordinal());
+
+               int circle_center_x = miner_tx + Util.fourdirx[view_dir] * Config.CONF.TSCHERMAK_OFFSET.value;
+               int circle_center_y = miner_ty + Util.fourdiry[view_dir] * Config.CONF.TSCHERMAK_OFFSET.value;
+
+               Util.GEN_CIRCLE_POSITIONS(circle_center_x, circle_center_y, Config.CONF.TSCHERMAK_MERGE_RADIUS.value);
+
+               int num_small_crystals = 0;
+
+               for (int i = 0; i < Util.CIRCLE_xpos.size; i++)
+               {
+                  int mx = Util.CIRCLE_xpos.get(i);
+                  int my = Util.CIRCLE_ypos.get(i);
+
+                  if (arena.drops.get(mx, my) >= 0)
+                  {
+                     byte drop_type = arena.drops.get(mx, my);
+                     Drops d = Drops.safe_ord(drop_type);
+                     if (d == null)
+                     {
+                        // I hope this is never the case!
+                        num_small_crystals++;
+                     } else
+                     {
+                        num_small_crystals += d.tschermak_merge_value;
+                     }
+                     arena.drops.set(mx, my, (byte) -1);
+                     int pid = arena.spawn_particle(mx, my, Particles.TYPE_TSCHERMAK_MERGER_CRYSTALS);
+                     arena.sm_particles.set(pid, Particles.VARIANT.ordinal(), (int) drop_type);
+                     arena.sm_particles.set(pid, Particles.TARGETX.ordinal(), circle_center_x);
+                     arena.sm_particles.set(pid, Particles.TARGETY.ordinal(), circle_center_y);
+                     // small merger crystal will lerp to the center of the circle to form a large one
+                  }
+               }
+
+               if (num_small_crystals > 0)
+               {
+                  // the big merged crystal only is visible after the merge
+                  int big_pid = arena.spawn_particle(circle_center_x, circle_center_y, Particles.TYPE_TSCHERMAK_MERGED);
+                  // not sure if resetting life here is redundant!
+                  arena.sm_particles.set(big_pid, Particles.LIFE.ordinal(), 0);
+                  // telling the big merged crystal how many small ones have been found to merge!
+                  arena.sm_particles.set(big_pid, Particles.VARIANT.ordinal(), num_small_crystals);
+                  arena.sm_particles.set(big_pid, Particles.ANGLE.ordinal(), miner_id);
+                  arena.sm_particles.set(big_pid, Particles.DATA1.ordinal(), 0);
+               } else
+               {
+                  consume_crystals = false;
+               }
+               // if there are no crystals then the skill is useless!
+            }
+            break;
+            case GROWTH:
+            {
+               int miner_tx = arena.sm_miners.get(miner_id, MinerData.TILEX.ordinal());
+               int miner_ty = arena.sm_miners.get(miner_id, MinerData.TILEY.ordinal());
+               int view_dir = arena.sm_miners.get(miner_id, MinerData.VIEWDIR.ordinal());
+
+               int circle_center_x = miner_tx + Util.fourdirx[view_dir] * Config.CONF.GROWTH_OFFSET.value;
+               int circle_center_y = miner_ty + Util.fourdiry[view_dir] * Config.CONF.GROWTH_OFFSET.value;
+
+               Util.GEN_CIRCLE_POSITIONS(circle_center_x, circle_center_y, Config.CONF.GROWTH_RADIUS.value);
+
+               int num_growth = 0;
+
+               for (int i = 0; i < Util.CIRCLE_xpos.size; i++)
+               {
+                  int mx = Util.CIRCLE_xpos.get(i);
+                  int my = Util.CIRCLE_ypos.get(i);
+
+                  // TURN RICH MELTS INTO CRYSTALS
+                  if (arena.melt.get(mx, my) > Config.CONF.MELT_FREEZE_VALUE.value)
+                  {
+                     num_growth++;
+                     arena.melt.set(mx, my, (byte) MathUtils.random(1, Config.CONF.MELT_FREEZE_VALUE.value));
+
+                     if (MathUtils.randomBoolean(Config.CONF.GROWTH_CHANCE_PERCENT.value / 100f))
+                     {
+                        if (arena.drops.get(mx, my) == -1)
+                        {
+                           Drops drop = Drops.spawn_random();
+                           arena.drops.set(mx, my, (byte) drop.ordinal());
+                        }
+                     }
+                  }
+               }
+               if (num_growth == 0) consume_crystals = false;
+            }
+            break;
+            case LANDSLIDE:
+            {
+               int miner_tx = arena.sm_miners.get(miner_id, MinerData.TILEX.ordinal());
+               int miner_ty = arena.sm_miners.get(miner_id, MinerData.TILEY.ordinal());
+               int view_dir = arena.sm_miners.get(miner_id, MinerData.VIEWDIR.ordinal());
+
+               Util.GEN_RECT_POSITIONS(miner_tx, miner_ty, Config.CONF.LANDSLIDE_CAST_OFFSET.value, view_dir, Config.CONF.LANDSLIDE_WIDTH.value, 1);
+
+               for (int i = 0; i < Util.RECT_xpos.size; i++)
+               {
+                  int pid = arena.spawn_particle(Util.RECT_xpos.get(i), Util.RECT_ypos.get(i), Particles.TYPE_LANDSLIDE);
+                  arena.sm_particles.set(pid, Particles.ANGLE.ordinal(), view_dir);
+                  //float val = 1 - MathUtils.sin(MathUtils.map(0, Util.RECT_xpos.size, 0, MathUtils.PI, i));
+                  //arena.sm_particles.set(pid, Particles.TARGETX.ordinal(), Util.FLOAT_TO_INT(-16 * val));
+               }
+
+            }
+            break;
+            case RAYLEIGH:
+            {
+               int miner_tx = arena.sm_miners.get(miner_id, MinerData.TILEX.ordinal());
+               int miner_ty = arena.sm_miners.get(miner_id, MinerData.TILEY.ordinal());
+               int view_dir = arena.sm_miners.get(miner_id, MinerData.VIEWDIR.ordinal());
+
+               Util.GEN_RECT_POSITIONS(miner_tx, miner_ty, Config.CONF.RAYLEIGH_CAST_OFFSET.value, view_dir, Config.CONF.RAYLEIGH_WIDTH.value, 1);
+
+               for (int i = 0; i < Util.RECT_xpos.size; i++)
+               {
+                  int pid = arena.spawn_particle(Util.RECT_xpos.get(i), Util.RECT_ypos.get(i), Particles.TYPE_RAYLEIGH);
+                  arena.sm_particles.set(pid, Particles.ANGLE.ordinal(), view_dir);
+                  //float val = 1 - MathUtils.sin(MathUtils.map(0, Util.RECT_xpos.size, 0, MathUtils.PI, i));
+                  //arena.sm_particles.set(pid, Particles.TARGETX.ordinal(), Util.FLOAT_TO_INT(-16 * val));
+               }
+            }
+            break;
+            case MAGNETISM:
+            {
+               consume_crystals = false;
+               int miner_tx = arena.sm_miners.get(miner_id, MinerData.TILEX.ordinal());
+               int miner_ty = arena.sm_miners.get(miner_id, MinerData.TILEY.ordinal());
+               Util.GEN_TORUS_POSITIONS(miner_tx, miner_ty, 0, Config.CONF.MAGNETISM_ATTRACT_RADIUS.value, false);
+               Util.GEN_TORUS_POSITIONS(miner_tx, miner_ty, Config.CONF.MAGNETISM_MIN_RADIUS.value, Config.CONF.MAGNETISM_MAX_RADIUS.value, true);
+
+               int targets_offset = 0;
+               int source_tx, source_ty, target_tx, target_ty;
+               for (int i = 0; i < Util.TORUS_pos_source.num_lines(); i++)
+               {
+                  source_tx = Util.TORUS_pos_source.get(i, 0);
+                  source_ty = Util.TORUS_pos_source.get(i, 1);
+                  if (arena.rock_walls.get(source_tx, source_ty) >= 0)
+                  {
+                     for (int j = targets_offset; j < Util.TORUS_pos_target.num_lines(); j++)
+                     {
+                        targets_offset = j;
+                        target_tx = Util.TORUS_pos_target.get(j, 0);
+                        target_ty = Util.TORUS_pos_target.get(j, 1);
+                        if (arena.rock_walls.get(target_tx, target_ty) < 0)
+                        {
+                           targets_offset++;
+                           consume_crystals = true;
+                           // target position is free, move rock
+                           byte rock = arena.rock_walls.get_set(source_tx, source_ty, (byte) -1);
+                           arena.damage.set(source_tx, source_ty, (byte) 0);
+
+                           int pid = arena.spawn_particle(source_tx, source_ty, Particles.TYPE_MOVING_ROCK);
+                           arena.sm_particles.multi_set(pid, Particles.TARGETX.ordinal(), target_tx, Particles.TARGETY.ordinal(), target_ty, Particles.DATA1.ordinal(), rock);
+                           //arena.rock_walls.set(target_tx, target_ty, rock);
+                           //arena.rock_growth.set(target_tx, target_ty, (byte) 0);
+                           break;
+                        }
+                     }
+                  }
+                  // no more target positions, I can stop now
+                  if (targets_offset >= Util.TORUS_pos_target.num_lines()) break;
+               }
+            }
+            break;
+         }
+
+         if (consume_crystals)
+         {
+            if (!power)
+            {
+               miner_crystals -= Config.CONF.CRYSTAL_SKILL_COST.value;
+               // OVERWRITE VALUE
+               sm_miner.set(miner_id, MinerData.NUM_CRYSTALS.ordinal(), miner_crystals);
+            }
          }
       }
+   }
+
+   public static boolean CHECK_skill_crystals(Arena arena, int miner_id)
+   {
+      boolean power = arena.sm_miners.get(miner_id, MinerData.TIME_POWER_EFFECT.ordinal()) > 0;
+      if (power) return true;
+      // check if miner currently has enough crystals to perform a special attack
+      int miner_crystals = arena.sm_miners.get(miner_id, MinerData.NUM_CRYSTALS.ordinal());
+      return miner_crystals - Config.CONF.CRYSTAL_SKILL_COST.value >= 0;
    }
 
    public static boolean CHECK_move(Arena arena, Smartrix smx_miner, int line)
@@ -322,46 +610,48 @@ public class Miner
       return arena.CHECK_free_tile(next_tx, next_ty) && (arena.CHECK_bounds(next_tx, next_ty));
    }
 
-   public static void move(Arena arena, Smartrix smx_miner, int line, int dir_move)
+   public static void move_miner(Arena arena, Smartrix smx_miner, int miner_id, int dir_move)
    {
+      // this function is called after a MinerAnim that is supposed to move the miner on the grid.
+
       // reading and writing directly from and into the matrix that holds the
       // miner data
 
       // dir_move is same as dir_move ?? all the time?
 
-      int next_tx = smx_miner.get(line, MinerData.TILEX.ordinal()) + Util.fourdirx[dir_move];
-      int next_ty = smx_miner.get(line, MinerData.TILEY.ordinal()) + Util.fourdiry[dir_move];
+      int next_tx = smx_miner.get(miner_id, MinerData.TILEX.ordinal()) + Util.fourdirx[dir_move];
+      int next_ty = smx_miner.get(miner_id, MinerData.TILEY.ordinal()) + Util.fourdiry[dir_move];
 
       // set miner dir, even if not moving
-      smx_miner.set(line, MinerData.VIEWDIR.ordinal(), dir_move);
+      smx_miner.set(miner_id, MinerData.VIEWDIR.ordinal(), dir_move);
 
       if (arena.CHECK_free_tile(next_tx, next_ty))
       {
          if (arena.CHECK_bounds(next_tx, next_ty))
          {
-            smx_miner.set(line, MinerData.TILEX.ordinal(), next_tx);
-            smx_miner.set(line, MinerData.TILEY.ordinal(), next_ty);
+            smx_miner.set(miner_id, MinerData.TILEX.ordinal(), next_tx);
+            smx_miner.set(miner_id, MinerData.TILEY.ordinal(), next_ty);
 
-            // here I touch a new tile and existing gravel may do damage!
-            if (arena.gravel.get(next_tx, next_ty) == 1)
+            // HERE STUFF IS CHECKED THAT ONLY DEALS DAMAGE ONCE WHEN STEPPING ON IT!
+            byte gravel_val = arena.gravel.get(next_tx, next_ty);
+            if (gravel_val > 0)
             {
-               arena.deal_damage_to_miner(line, Config.CONF.ALLUVIAL_FAN_STEP_DAMAGE.value);
+               arena.deal_damage_to_miner(miner_id, gravel_val * Config.CONF.EROSION_BASE_DAMAGE.value);
             }
          }
       } else
       {
          // TODO: 26.07.2021 player bump sound?
       }
-
       // for now move the miner in one frame. later we do a lerp but still keep the grid location
    }
 
    public enum MinerClass
    {
       KENKMANN(MinerAttack.SIMPLE_HIT, MinerAttack.ROUND_SWING, MinerAttack.IMPACT, MinerAttack.OROGENY, MinerAttack.TRANSFORM_FAULT),
-      PREUSSER(MinerAttack.SIMPLE_HIT, MinerAttack.ROUND_SWING, MinerAttack.BRAIDED_RIVER, MinerAttack.ALLUVIAL_FAN, MinerAttack.GLACIER),
-      HERGARTEN(MinerAttack.SIMPLE_HIT, MinerAttack.ROUND_SWING, null, null, null),
-
+      PREUSSER(MinerAttack.SIMPLE_HIT, MinerAttack.ROUND_SWING, MinerAttack.BRAIDED_RIVER, MinerAttack.EROSION, MinerAttack.GLACIER),
+      HERGARTEN(MinerAttack.SIMPLE_HIT, MinerAttack.ROUND_SWING, MinerAttack.LANDSLIDE, MinerAttack.MAGNETISM, MinerAttack.RAYLEIGH),
+      DOLEJS(MinerAttack.SIMPLE_HIT, MinerAttack.ROUND_SWING, MinerAttack.TSCHERMAK, MinerAttack.MELT, MinerAttack.GROWTH),
       ;
 
       public final MinerAttack primary, secondary, special_offensive, special_defensive, special_special;
@@ -373,6 +663,11 @@ public class Miner
          this.special_offensive = offensive;
          this.special_defensive = defensive;
          this.special_special = special;
+      }
+
+      public static MinerClass random()
+      {
+         return values()[MathUtils.random(0, values().length - 1)];
       }
 
       public static MinerClass safe_ord(int ord)

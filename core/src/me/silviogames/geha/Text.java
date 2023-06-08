@@ -662,6 +662,8 @@ public class Text
 		// iterate over the payload until the first -1 value is found
 		// now either the stored ints in the payload directly are the offsets into the alphabet textureregion array.
 		// but since I want to do inline color change I need to know the character
+		// TODO: 26.05.23 there seems to be a bug here that did not occur very often in this project,
+		//  but it did in project_delivery, every frame one of the texts on the screen flickers and that flicker effect moves through the texts, can be observed sometimes when debug_rendering a value on every tile of the arena grid
 
 		if (textdata.get(line, TEXT_DATA.STATUS.offset) >= 0)
 		{
@@ -682,7 +684,7 @@ public class Text
 				if (value == -1) break;
 				buchstabe = (char) value;
 
-				// TODO: 01.02.23 inline color will be added later, first test the system in general
+				// inline color does not work in this version of text but I do not need it in this game
 				if (buchstabe == '§')
 				{
 					//temp = Color.valueOf(txt.substring(i + 1, i + 9));

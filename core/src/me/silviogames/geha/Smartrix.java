@@ -23,11 +23,11 @@ public class Smartrix
    // this list holds lines that have been cleared for quick reuse
    private final IntArray list_empty = new IntArray();
 
-   public Smartrix(int w, int dv, int cv)
+   public Smartrix(int width, int default_value, int clear_value)
    {
-      this.width = w;
-      this.def_value = dv;
-      this.clear_value = cv;
+      this.width = width;
+      this.def_value = default_value;
+      this.clear_value = clear_value;
       // width * 10 is the capacity of the internal array but when creating a new smartrix it is empty.
       data = new IntArray(width * 10);
    }
@@ -35,6 +35,13 @@ public class Smartrix
    public int get(int line, int offset)
    {
       return data.get((line * width) + offset);
+   }
+
+   public int get_set(int line, int offset, int set)
+   {
+      int ret = data.get((line * width) + offset);
+      data.set((line * width) + offset, set);
+      return ret;
    }
 
    public int[] get_line(int line)
@@ -155,8 +162,12 @@ public class Smartrix
 
    public void multi_set(int line, int... offsets_and_values)
    {
-      // TODO: 06.04.23 THIS NEEDS TESTING
       // can be used to write to multiple values in one line, but maybe it is not as readable anymore!
+      // but in theory it could be used to do something like:
+      // sm_miner.multiset(miner_id, MinerData.LIFE.ordinal(), 10, MinerData.Blink.ordinal(), 30);
+      // the offsets_and_values is constructed by a list pairs of
+      // offset and values
+
       if (offsets_and_values == null)
       {
          System.out.println("Smartrix.multi_set failed, offset_and_values is null");
@@ -167,16 +178,60 @@ public class Smartrix
          System.out.println("Smartrix.multi_set failed, offset_and_values is wrong size, modulo 2!");
          return;
       }
-      for (int i = 0; i < offsets_and_values.length; i+=2)
+      for (int i = 0; i < offsets_and_values.length; i += 2)
       {
-         set(line, offsets_and_values[i], offsets_and_values[i + 1] );
+         set(line, offsets_and_values[i], offsets_and_values[i + 1]);
       }
    }
 
-   public void print_to_console()
+   public void sort(int sorting_index, boolean ascending)
+   {
+      quickSort(0, num_lines() - 1, sorting_index, ascending);
+   }
+
+   public void quickSort(int low, int high, int sorting_index, boolean ascending)
+   {
+      if (low < high)
+      {
+         int pivotIndex = partition(low, high, sorting_index, ascending);
+         quickSort(low, pivotIndex - 1, sorting_index, ascending);
+         quickSort(pivotIndex + 1, high, sorting_index, ascending);
+      }
+   }
+
+   public int partition(int low, int high, int sorting_index, boolean ascending)
+   {
+      int pivot = get(high, sorting_index);
+      int i = low - 1;
+      for (int j = low; j < high; j++)
+      {
+         if ((get(j, sorting_index) < pivot && ascending) || (get(j, sorting_index) > pivot && !ascending))
+         {
+            i++;
+            swap_lines(i, j);
+         }
+      }
+      swap_lines(i + 1, high);
+      return i + 1;
+   }
+
+   public void swap_lines(int first, int second)
+   {
+      if (first >= num_lines() || second >= num_lines() || first < 0 || second < 0)
+      {
+         return;
+      } else
+      {
+         int[] temp_line = get_line(second);
+         set_line(second, 0f, get_line(first));
+         set_line(first, 0f, temp_line);
+      }
+   }
+
+   public void print_to_console(String intro)
    {
       // may spam console if large!
-      System.out.println("_________________________");
+      System.out.println("______ " + intro + " _____");
       // DEBUG PRINT
       if (num_lines() == 0)
       {

@@ -12,6 +12,7 @@ public enum Res
 
    SHEET_FLOOR_TILES(3, 16, 16),
    SHEET_BLOCKS(1, 16, 30),
+   SHEET_GROWING_ROCKBASE(15, 16, 14),
    SHEET_BREAK(5, 16, 30),
    GUY(9, 32, 34),
    DIRECTIONS(4, 16, 16),
@@ -20,7 +21,7 @@ public enum Res
    CRYSTAL(1, 16, 16),
    IMPACTOR(1, 32, 32),
 
-   TILE_GRAVEL(1, 16, 16),
+   SHEET_GRAVEL(3, 16, 16),
 
    PIXEL(),
    ;
@@ -33,6 +34,8 @@ public enum Res
    int sheet_num = 0, sheet_width = -1, sheet_height = -1;
    TextureRegion region;
    TextureRegion[] sheet;
+
+   static TextureRegion top_side_rockwall;
 
    Res()
    {
@@ -63,6 +66,8 @@ public enum Res
          }
       }
 
+      top_side_rockwall = new TextureRegion(SHEET_BLOCKS.region, 0,0,16,16);
+
       load_queue.add(Anim.PARTICLE_BLOOD);
       load_anims(atlas.findRegion("particle_blood"), 50, 20, 0);
       load_queue.clear();
@@ -70,6 +75,8 @@ public enum Res
       load_queue.add(Anim.MINER_IDLE);
       load_queue.add(Anim.MINER_RUN);
       load_queue.add(Anim.MINER_HAMMER);
+      load_queue.add(Anim.MINER_CAST);
+      load_queue.add(Anim.MINER_SPIN);
       load_anims(atlas.findRegion("guy"), 32, 34, 0);
       load_queue.clear();
 

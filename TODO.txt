@@ -1,32 +1,18 @@
-SYSTEMS:
-- Y Sort all entities!
+UI/UX:
+- place the huds of the miners in a better position that is not overlapping the arena?
+- miner direction arrow now sorts behind rockwalls, needs to be rendered on top of arena! (simple fix)
 
-MOVEMENT_SYSTEM:
-- take lerp value into consideration when doing collision detection (miner can be partially on multiple tiles and is factored into damage calculation)
-- allow left stick for movement
-- allow hold for movement
-- unify analog and digital movement
+DEBUGGING/TESTING:
+- enable keyboard input that populates the new controller state
 
-- example:
-- specials will later maybe be triggered by holding the special button for some short time,
-- the special spawn animation will play and if the button is still down at the end of the animation the
-- effect will play. I need then to tune the timings so other players cannot to easily predict specials
-- atleast they cannot predict which special, but the cast animation should just be very short
-
-MINER:
-
-OBJECTS:
-- add other crystals with cool temporal effects:
-    - strength
-    - speed
-    - luck for finding other crystals
-
-UI/UX
-- control menus with controller (only the oldest controller?)
-- improve crystal count UI
+GAMEPAD SUPPORT:
+- improve the hotplugging, disconnect due to battery!
+stuff to test:
+    - disconnecting controller during a game
+    - connect a controller during a game
+    - should the remapping of uncontrolled miner and free controller happen automatically?
 
 GRID/ARENA:
-- prevent player input during TF animation
 - add a hand crafted testing arena
 - add several types of arenas
 - make sure all of them have generic spawn locations
@@ -36,19 +22,21 @@ GRID/ARENA:
     - how are crystals effected, they could either be moved to the next free location or even cooler they could merge with the formed blocks, affecting them. then the crystal is metamorphically transformed and the containing block has much more life so it takes some time to break it and players may fight for the block.
 
 GAMEPLAY:
-- MAYBE a very simple exp system to lvl up attacks
 -
 
-VFX:
-- add some shader to crystals
+SPECIAL COMBOS:
+    - kenkmann hitting crystals with an impact will alter them and give them effectrs
 
-SPECIAL_ATTACKS:
-- implement consumption of specific minerals per special type (if multiple minerals are wanted)
+VFX:
+- add some shader to crystals (?? david sprites also with shaders?)
 
 MINER HERGARTEN:
     - mass movement?
     - earthquake
     - something with matlap
+
+KENKMANN:
+    - IMPACT drops are overpowered. other effect is needed when impact destroys blocks
 
 IMPLEMENTATION OF KENKMANN'S TRANSFORM FAULT:
 - instant version works now, needs testing though
@@ -59,21 +47,5 @@ IMPLEMENTATION OF KENKMANN'S TRANSFORM FAULT:
 - visually display the fault line during the delay, maybe particles of debris
 - after delay the particle calls the arena method that does all the offsets and damage dealing
 
-MINER PREUSSER:
-    ATTACK  - braided river
-    DEFENSE - gravel floor (taking damage and slower on gravel)
-    SPECIAL - something with glaciers (slippery floor?)
-    COMBO   - first gravel floor then braided river, gravel moves and does more damage
-    COMBO   - combine gravel and ice so players will move over all gravel tiles and get all the damage
-
-MINER HERGARTEN:
-    ATTACK  -
-    DEFENSE -
-    SPECIAL
-
-IDEAS FOR HERGARTEN SKILLS:
-    - something with matlab/code
-    - earthquake/tsunami
-    - landslide
-
-
+BRAIDED RIVER COMBO:
+-   braided river increases the speed a melt crystallizes, and will create glass but what effect has glass?

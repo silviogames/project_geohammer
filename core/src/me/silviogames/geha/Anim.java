@@ -10,7 +10,9 @@ public enum Anim
    MINER_IDLE(2, 0.3f, -1, false, 0, 1),
    MINER_RUN(3, 0.04f, -1, true, 0, 1, 2, 1),
    MINER_HAMMER(4, 0.025f, 2, true, 0, 0, 1, 1, 1, 1, 1, 1, 2, 3, 3),
-   MINER_SLIDE(2, 0.04f, -1, true, 0, 1),
+   MINER_SLIDE(2, 0.03f, -1, true, 0, 1),
+   MINER_CAST(4, 0.12f, 2, false, 0, 1, 1, 1, 2, 3, 3),
+   MINER_SPIN(4, 0.04f, -1, false, 0,1,2,3 ),
 
    ;
    public static float[] returner = new float[3];
