@@ -282,7 +282,7 @@ public class Game implements ControllerListener
          if(arena.sm_miners.num_lines() < 4)
          {
             // adding new miner that can be controlled with the keyboard for testing
-            arena.create_miner(Miner.MinerClass.KENKMANN);
+            arena.create_miner(Miner.MinerClass.DOLEJS);
          }
       }
 

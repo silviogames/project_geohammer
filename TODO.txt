@@ -1,3 +1,9 @@
+MILESTONE NBF:
+o fix window size to fit on 1920:1080 beamer screen (needs testing on beamer at home)
+o make sure all relevant objects are visually and logically displaced by transform fault
+
+
+
 UI/UX:
 - place the huds of the miners in a better position that is not overlapping the arena?
 - miner direction arrow now sorts behind rockwalls, needs to be rendered on top of arena! (simple fix)

@@ -22,6 +22,7 @@ public enum Res
    IMPACTOR(1, 32, 32),
 
    SHEET_GRAVEL(3, 16, 16),
+   MAGNET(1, 46, 46),
 
    PIXEL(),
    ;
@@ -66,7 +67,7 @@ public enum Res
          }
       }
 
-      top_side_rockwall = new TextureRegion(SHEET_BLOCKS.region, 0,0,16,16);
+      top_side_rockwall = new TextureRegion(SHEET_BLOCKS.region, 0, 0, 16, 16);
 
       load_queue.add(Anim.PARTICLE_BLOOD);
       load_anims(atlas.findRegion("particle_blood"), 50, 20, 0);

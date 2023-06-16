@@ -433,7 +433,7 @@ public enum Menu
             Text.cdraw("PROJECT GEOHAMMER", Main.window_width / 2, Main.window_height / 2 + 20, Color.WHITE, 3);
             Text.cdraw("press space to start", Main.window_width / 2, Main.window_height / 2 - 20, Color.WHITE, 2);
 
-            Text.draw("version " + 2319, Main.window_width - 60, 2, Color.WHITE, 1);
+            Text.draw("version " + 2324, Main.window_width - 60, 2, Color.WHITE, 1);
 
             if (esc_time > 0f)
             {

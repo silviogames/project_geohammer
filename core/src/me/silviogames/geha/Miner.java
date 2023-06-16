@@ -538,44 +538,14 @@ public class Miner
             break;
             case MAGNETISM:
             {
-               consume_crystals = false;
-               int miner_tx = arena.sm_miners.get(miner_id, MinerData.TILEX.ordinal());
-               int miner_ty = arena.sm_miners.get(miner_id, MinerData.TILEY.ordinal());
-               Util.GEN_TORUS_POSITIONS(miner_tx, miner_ty, 0, Config.CONF.MAGNETISM_ATTRACT_RADIUS.value, false);
-               Util.GEN_TORUS_POSITIONS(miner_tx, miner_ty, Config.CONF.MAGNETISM_MIN_RADIUS.value, Config.CONF.MAGNETISM_MAX_RADIUS.value, true);
-
-               int targets_offset = 0;
-               int source_tx, source_ty, target_tx, target_ty;
-               for (int i = 0; i < Util.TORUS_pos_source.num_lines(); i++)
-               {
-                  source_tx = Util.TORUS_pos_source.get(i, 0);
-                  source_ty = Util.TORUS_pos_source.get(i, 1);
-                  if (arena.rock_walls.get(source_tx, source_ty) >= 0)
-                  {
-                     for (int j = targets_offset; j < Util.TORUS_pos_target.num_lines(); j++)
-                     {
-                        targets_offset = j;
-                        target_tx = Util.TORUS_pos_target.get(j, 0);
-                        target_ty = Util.TORUS_pos_target.get(j, 1);
-                        if (arena.rock_walls.get(target_tx, target_ty) < 0)
-                        {
-                           targets_offset++;
-                           consume_crystals = true;
-                           // target position is free, move rock
-                           byte rock = arena.rock_walls.get_set(source_tx, source_ty, (byte) -1);
-                           arena.damage.set(source_tx, source_ty, (byte) 0);
-
-                           int pid = arena.spawn_particle(source_tx, source_ty, Particles.TYPE_MOVING_ROCK);
-                           arena.sm_particles.multi_set(pid, Particles.TARGETX.ordinal(), target_tx, Particles.TARGETY.ordinal(), target_ty, Particles.DATA1.ordinal(), rock);
-                           //arena.rock_walls.set(target_tx, target_ty, rock);
-                           //arena.rock_growth.set(target_tx, target_ty, (byte) 0);
-                           break;
-                        }
-                     }
-                  }
-                  // no more target positions, I can stop now
-                  if (targets_offset >= Util.TORUS_pos_target.num_lines()) break;
-               }
+               int miner_tx, miner_ty;
+               miner_tx = sm_miner.get(miner_id, MinerData.TILEX.ordinal());
+               miner_ty = sm_miner.get(miner_id, MinerData.TILEY.ordinal());
+               int pid = arena.spawn_particle(miner_tx, miner_ty, Particles.TYPE_MAGNET);
+               arena.sm_particles.set(pid, Particles.ANGLE.ordinal(), sm_miner.get(miner_id, MinerData.VIEWDIR.ordinal()));
+               // setting target id to -1, just to make sure. I don't know if by default it is -1, a reused line may have something else there
+               arena.sm_particles.set(pid, Particles.DATA1.ordinal(), -1);
+               arena.sm_particles.set(pid, Particles.VARIANT.ordinal(), miner_id);
             }
             break;
          }
@@ -660,9 +630,9 @@ public class Miner
       {
          this.primary = primary;
          this.secondary = secondary;
-         this.special_offensive = offensive;
-         this.special_defensive = defensive;
-         this.special_special = special;
+         this.special_offensive = offensive; // (A)
+         this.special_defensive = defensive; // (X)
+         this.special_special = special;  // (Y)
       }
 
       public static MinerClass random()

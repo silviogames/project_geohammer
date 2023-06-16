@@ -9,7 +9,7 @@ import com.badlogic.gdx.utils.IntIntMap;
 
 public class Arena
 {
-   public static int arena_width = 50, arena_height = 36;
+   public static int arena_width = 1920 / 32, arena_height = 1080 / 32;
 
    public static int tile_size_px = 16;
 
@@ -300,7 +300,6 @@ public class Arena
 
    private void update_miners(float delta)
    {
-
       // stamina system is not in use! may remove at some point
       if (Config.CONF.STAMINA_SYSTEM.value == 1 && timer_stamina_gain.update(delta))
       {
@@ -350,12 +349,25 @@ public class Arena
 
             // all the damage checks are done but as soon as one triggers, the blink timer being larger than 0f will prevent further damage in this frame
 
+            // to check for rocks at miner location first is good because otherwise double damage would be possible
             RockTypes rt = RockTypes.safe_ord(rock_walls.get(miner_x, miner_y));
             if (rt != null)
             {
                // using orogeny damage here
                deal_damage_to_miner(i, Config.CONF.OROGENY_HIT_DAMAGE.value);
                hammer(miner_x, miner_y, 30, false);
+            }
+
+            for (int j = 0; j < 8; j++)
+            {
+               int ox = Util.eightdirx[j];
+               int oy = Util.eightdiry[j];
+               byte rg = rock_growth.get(miner_x + ox, miner_y + oy);
+               if (rg < 15 && rg > 2)
+               {
+                  deal_damage_to_miner(i, Config.CONF.RAYLEIGH_DAMAGE.value);
+                  break;
+               }
             }
 
             // SOME MAP EFFECT LAYERS DEAL DAMAGE
@@ -777,6 +789,8 @@ public class Arena
       float time_blink = Util.INT_TO_FLOAT(sm_miners.get(miner_id, MinerData.BLINK.ordinal()));
       if (time_blink > 0f) return;
 
+      System.out.println("dealing " + damage + " to player " + miner_id);
+
       int current_life = sm_miners.get(miner_id, MinerData.LIFE.ordinal());
       current_life -= damage;
       current_life = MathUtils.clamp(current_life, 0, Config.CONF.MINER_MAX_LIFE.value);
@@ -856,6 +870,44 @@ public class Arena
       {
          System.out.println("ARENA: cannot trigger another fault right now!");
          return false;
+      }
+   }
+
+   public void perform_magnetism(int miner_tx, int miner_ty)
+   {
+      Util.GEN_TORUS_POSITIONS(miner_tx, miner_ty, 0, Config.CONF.MAGNETISM_ATTRACT_RADIUS.value, false);
+      Util.GEN_TORUS_POSITIONS(miner_tx, miner_ty, Config.CONF.MAGNETISM_MIN_RADIUS.value, Config.CONF.MAGNETISM_MAX_RADIUS.value, true);
+
+      int targets_offset = 0;
+      int source_tx, source_ty, target_tx, target_ty;
+      for (int i = 0; i < Util.TORUS_pos_source.num_lines(); i++)
+      {
+         source_tx = Util.TORUS_pos_source.get(i, 0);
+         source_ty = Util.TORUS_pos_source.get(i, 1);
+         if (rock_walls.get(source_tx, source_ty) >= 0)
+         {
+            for (int j = targets_offset; j < Util.TORUS_pos_target.num_lines(); j++)
+            {
+               targets_offset = j;
+               target_tx = Util.TORUS_pos_target.get(j, 0);
+               target_ty = Util.TORUS_pos_target.get(j, 1);
+               if (rock_walls.get(target_tx, target_ty) < 0)
+               {
+                  targets_offset++;
+                  // target position is free, move rock
+                  byte rock = rock_walls.get_set(source_tx, source_ty, (byte) -1);
+                  damage.set(source_tx, source_ty, (byte) 0);
+
+                  int pid = spawn_particle(source_tx, source_ty, Particles.TYPE_MOVING_ROCK);
+                  sm_particles.multi_set(pid, Particles.TARGETX.ordinal(), target_tx, Particles.TARGETY.ordinal(), target_ty, Particles.DATA1.ordinal(), rock);
+                  //arena.rock_walls.set(target_tx, target_ty, rock);
+                  //arena.rock_growth.set(target_tx, target_ty, (byte) 0);
+                  break;
+               }
+            }
+         }
+         // no more target positions, I can stop now
+         if (targets_offset >= Util.TORUS_pos_target.num_lines()) break;
       }
    }
 
@@ -1190,6 +1242,10 @@ public class Arena
 
    public void prepare()
    {
+      fault_ongoing = false;
+      ongoing_rockwall_count = 0;
+      last_rockfill_percent = 0;
+
       // TODO: 20.04.23 game will crash in second round but I need to this if this is still true!
       seed = MathUtils.random(0, Integer.MAX_VALUE - 100);
       OpenSimplexNoise noise_board = new OpenSimplexNoise(seed, 2);
@@ -1216,7 +1272,7 @@ public class Arena
 
             float val = (float) ((noise_board.noise(ix, iy) + 1) / 2f);
 
-            if (dst_to_mid < 400)
+            if (dst_to_mid < Config.CONF.ARENA_ROCK_RADIUS.value)
             {
                if (val <= 0.65f)
                {
@@ -1250,7 +1306,8 @@ public class Arena
          Text.draw("last rockfill percent " + Arena.last_rockfill_percent, 3, Main.upper_y_bound() + running_debug_offset);
          running_debug_offset -= 10;
 
-         if(sm_miners.num_lines() > 0){
+         if (sm_miners.num_lines() > 0)
+         {
             Text.draw("miner 1 num crystals " + sm_miners.get(0, MinerData.NUM_CRYSTALS.ordinal()), 3, Main.upper_y_bound() + running_debug_offset);
             running_debug_offset -= 10;
             Text.draw("miner 1 num future crystals " + sm_miners.get(0, MinerData.FUTURE_CRYSTALS.ordinal()), 3, Main.upper_y_bound() + running_debug_offset);

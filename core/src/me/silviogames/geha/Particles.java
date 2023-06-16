@@ -64,6 +64,12 @@ public enum Particles
    // from and target pos in tiles
    // data1 = type of rock
 
+   // this particle starts to fly straight until it finds another miner, which it follows and does the effect at their location
+   public static final int TYPE_MAGNET = 73;
+   // angle is viewdir
+   // data1 is target id (-1 in the beginning)
+   // variant is id of owner to prevent self harm
+
    public static final int TYPE_BLOOD = 100;
    public static final int TYPE_OBTAIN_CRYSTAL = 101;
 
@@ -141,6 +147,28 @@ public enum Particles
 
       switch (data_particle[TYPE.ordinal()])
       {
+         case TYPE_MAGNET:
+         {
+            int mhw = Res.MAGNET.region.getRegionWidth() / 2;
+
+            if (data_particle[DATA1.ordinal()] == -1)
+            {
+               int px = data_particle[POSX.ordinal()];
+               int py = data_particle[POSY.ordinal()];
+               float offset = Util.INT_TO_FLOAT(data_particle[LIFE.ordinal()]);
+               int viewdir = data_particle[ANGLE.ordinal()];
+               Main.batch.draw(Res.MAGNET.region, px * 16 + Util.fourdirx[viewdir] * offset * 16 - mhw, py * 16 + Util.fourdiry[viewdir] * offset * 16 - mhw);
+            } else
+            {
+               float life = Util.INT_TO_FLOAT(data_particle[LIFE.ordinal()]);
+               float interp = Interpolation.linear.apply(life);
+               //float sin_val = MathUtils.map(0f, 1f, 0f, MathUtils.PI, interp);
+               float rx = MathUtils.lerp(data_particle[POSX.ordinal()], data_particle[TARGETX.ordinal()], interp);
+               float ry = MathUtils.lerp(data_particle[POSY.ordinal()], data_particle[TARGETY.ordinal()], interp);
+               Main.batch.draw(Res.MAGNET.region, rx * 16 - mhw, ry * 16 - mhw);
+            }
+         }
+         break;
          case TYPE_MOVING_ROCK:
          {
             float life = Util.INT_TO_FLOAT(data_particle[LIFE.ordinal()]);
@@ -1001,6 +1029,59 @@ public enum Particles
                {
                   data_particle[LIFE.ordinal()] = Util.FLOAT_TO_INT(time);
                }
+            }
+            break;
+            case TYPE_MAGNET:
+            {
+               float time = Util.INT_TO_FLOAT(data_particle[LIFE.ordinal()]);
+               float life_time = Util.INT_TO_FLOAT(data_particle[DATA1.ordinal()] == -1 ? Config.CONF.MAGNETISM_FLY_SPEED_MS_PER_TILE.value : Config.CONF.MAGNETISM_APPROACH_TIME_MS.value);
+               time = MathUtils.clamp(time + delta / life_time, 0, 1);
+               if (time >= 1)
+               {
+                  time = 0;
+                  if (data_particle[DATA1.ordinal()] != -1)
+                  {
+                     arena.perform_magnetism(data_particle[TARGETX.ordinal()], data_particle[TARGETY.ordinal()]);
+                     dead = true;
+                  } else
+                  {
+                     int viewdir = data_particle[ANGLE.ordinal()];
+                     data_particle[POSX.ordinal()] += Util.fourdirx[viewdir];
+                     data_particle[POSY.ordinal()] += Util.fourdiry[viewdir];
+
+                     // check if out of arena then die,
+                     if (data_particle[Particles.POSX.ordinal()] < -5 || data_particle[Particles.POSX.ordinal()] > Arena.arena_width + 5 || data_particle[Particles.POSY.ordinal()] > Arena.arena_height + 5 || data_particle[Particles.POSY.ordinal()] < -5)
+                     {
+                        dead = true;
+                     } else
+                     {
+                        // check if enemy miner is near then go into targeting mode
+                        for (int j = 0; j < arena.sm_miners.num_lines(); j++)
+                        {
+                           if (j != data_particle[VARIANT.ordinal()])
+                           {
+                              // this is an enemy
+                              if (arena.sm_miners.get(j, MinerData.ACTIVE.ordinal()) == 1)
+                              {
+                                 int miner_tx, miner_ty;
+                                 miner_tx = arena.sm_miners.get(j, MinerData.TILEX.ordinal());
+                                 miner_ty = arena.sm_miners.get(j, MinerData.TILEY.ordinal());
+
+                                 // enemy is alive
+                                 if (Util.simple_dist(data_particle[POSX.ordinal()], data_particle[POSY.ordinal()], miner_tx, miner_ty) < Config.CONF.MAGNETISM_TARGET_RADIUS.value * Config.CONF.MAGNETISM_TARGET_RADIUS.value)
+                                 {
+                                    data_particle[Particles.DATA1.ordinal()] = j;
+                                    data_particle[TARGETX.ordinal()] = miner_tx;
+                                    data_particle[TARGETY.ordinal()] = miner_ty;
+                                    break;
+                                 }
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+               data_particle[LIFE.ordinal()] = Util.FLOAT_TO_INT(time);
             }
             break;
          }

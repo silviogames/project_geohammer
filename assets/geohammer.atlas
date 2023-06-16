@@ -6,112 +6,119 @@ filter: Nearest, Nearest
 repeat: none
 5x6font
   rotate: false
-  xy: 2, 787
+  xy: 2, 822
   size: 128, 64
   orig: 128, 64
   offset: 0, 0
   index: -1
 block
   rotate: false
-  xy: 2, 679
+  xy: 2, 714
   size: 32, 74
   orig: 32, 74
   offset: 0, 0
   index: 32
 crystal
   rotate: false
-  xy: 36, 719
+  xy: 924, 922
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
   index: -1
 directions
   rotate: false
-  xy: 132, 835
+  xy: 855, 922
   size: 67, 16
   orig: 67, 16
   offset: 0, 0
   index: -1
 error_frame
   rotate: false
-  xy: 132, 811
+  xy: 36, 748
   size: 16, 22
   orig: 16, 22
   offset: 0, 0
   index: -1
 guy
   rotate: false
-  xy: 2, 869
+  xy: 2, 904
   size: 560, 34
   orig: 560, 34
   offset: 0, 0
   index: -1
 impactor
   rotate: false
-  xy: 88, 753
+  xy: 88, 788
   size: 32, 32
   orig: 32, 32
   offset: 0, 0
   index: -1
+magnet
+  rotate: false
+  xy: 132, 840
+  size: 46, 46
+  orig: 46, 46
+  offset: 0, 0
+  index: -1
 particle_blood
   rotate: false
-  xy: 564, 883
+  xy: 564, 918
   size: 203, 20
   orig: 203, 20
   offset: 0, 0
   index: -1
 particles_rock
   rotate: false
-  xy: 769, 887
+  xy: 769, 922
   size: 84, 16
   orig: 84, 16
   offset: 0, 0
   index: -1
 pixel
   rotate: false
-  xy: 258, 866
+  xy: 258, 901
   size: 1, 1
   orig: 1, 1
   offset: 0, 0
   index: -1
 sheet_blocks
   rotate: false
-  xy: 2, 647
+  xy: 2, 682
   size: 16, 30
   orig: 16, 30
   offset: 0, 0
   index: -1
 sheet_break
   rotate: false
-  xy: 2, 755
+  xy: 2, 790
   size: 84, 30
   orig: 84, 30
   offset: 0, 0
   index: -1
 sheet_floor_tiles
   rotate: false
-  xy: 855, 887
+  xy: 180, 870
   size: 50, 16
   orig: 50, 16
   offset: 0, 0
   index: -1
 sheet_gravel
   rotate: false
-  xy: 36, 737
+  xy: 36, 772
   size: 50, 16
   orig: 50, 16
   offset: 0, 0
   index: -1
 sheet_growing_rockbase
   rotate: false
-  xy: 2, 853
+  xy: 2, 888
   size: 254, 14
   orig: 254, 14
   offset: 0, 0
   index: -1
 tile_gravel
   rotate: false
-  xy: 201, 835
+  xy: 132, 822
   size: 16, 16
   orig: 16, 16
   offset: 0, 0
